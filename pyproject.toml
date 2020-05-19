@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gordo-dataset"
-version = "0.1.0"
+version = "0.0.0"
 description = "Gordo datasets and data providers"
 authors = ["Equinor ASA <fg_gpl@equinor.com>"]
 
@@ -40,6 +40,15 @@ mock = "^4.0.2"
 pytest-mock = "^3.1.0"
 pytest-flakes = "^4.0.0"
 
+[tool.poetry-dynamic-versioning]
+enable = true
+vcs = "git"
+style = "semver"
+
+[tool.poetry-dynamic-versioning.substitution]
+files = ["gordo_dataset/__init__.py"]
+
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+
