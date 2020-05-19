@@ -1,0 +1,45 @@
+[tool.poetry]
+name = "gordo-dataset"
+version = "0.1.0"
+description = "Gordo datasets and data providers"
+authors = ["Equinor ASA <fg_gpl@equinor.com>"]
+
+license = "AGPLv3"
+readme = "README.md"
+homepage = "https://github.com/equinor/gordo-dataset"
+repository = "https://github.com/equinor/gordo-dataset"
+keywords = ["gordo"]
+classifiers = [
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: GNU Affero General Public License v3",
+        "Natural Language :: English",
+        "Programming Language :: Python :: 3.7",
+    ]
+include = [
+    "LICENSE"
+]
+packages = [
+    { include = "gordo_dataset" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+azure-datalake-store = "^0.0.48"
+pandas = "^1.0.3"
+influxdb = "^5.3.0"
+cachetools = "^4.1.0"
+typing_extensions = "^3.7.4"
+pyarrow = "^0.17.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+black = {version = "^19.10b0", allow-prereleases = true}
+pytest-cov = "^2.8.1"
+docker = "^4.2.0"
+mock = "^4.0.2"
+pytest-mock = "^3.1.0"
+pytest-flakes = "^4.0.0"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
