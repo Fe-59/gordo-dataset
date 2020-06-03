@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 TEST_SERVER_MUTEXT = Lock()
 
+
 @pytest.fixture(autouse=True)
 def check_event_loop():
     loop = asyncio.get_event_loop()
