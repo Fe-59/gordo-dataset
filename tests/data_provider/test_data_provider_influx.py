@@ -10,6 +10,7 @@ from gordo_dataset.dataset import _get_dataset
 
 logger = logging.getLogger(__name__)
 
+
 @pytest.mark.dockertest
 def test_read_single_sensor_empty_data_time_range_indexerror(
     influxdb, influxdb_uri, sensors_str, caplog
@@ -35,6 +36,7 @@ def test_read_single_sensor_empty_data_time_range_indexerror(
                 measurement="sensors",
             )
 
+
 @pytest.mark.dockertest
 def test_read_single_sensor_empty_data_invalid_tag_name_valueerror(
     influxdb, influxdb_uri
@@ -58,6 +60,7 @@ def test_read_single_sensor_empty_data_invalid_tag_name_valueerror(
             measurement="sensors",
         )
 
+
 @pytest.mark.dockertest
 def test__list_of_tags_from_influx_validate_tag_names(
     influxdb, influxdb_uri, sensors_str
@@ -77,6 +80,7 @@ def test__list_of_tags_from_influx_validate_tag_names(
         f"Expected tags = {expected_tags}" f"outputted {tags}"
     )
 
+
 @pytest.mark.dockertest
 def test_get_list_of_tags(influxdb, influxdb_uri, sensors_str):
     ds = InfluxDataProvider(
@@ -92,6 +96,7 @@ def test_get_list_of_tags(influxdb, influxdb_uri, sensors_str):
     # The cache does not screw stuff up
     tags = set(ds.get_list_of_tags())
     assert expected_tags == tags
+
 
 @pytest.mark.dockertest
 def test_influx_dataset_attrs(influxdb, influxdb_uri, sensors):
@@ -117,6 +122,7 @@ def test_influx_dataset_attrs(influxdb, influxdb_uri, sensors):
 
     metadata = dataset.get_metadata()
     assert isinstance(metadata, dict)
+
 
 @pytest.mark.dockertest
 def test_influx_load_series_dry_run_raises(sensors):
