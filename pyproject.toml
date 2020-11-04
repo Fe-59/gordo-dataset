@@ -10,13 +10,14 @@ homepage = "https://github.com/equinor/gordo-dataset"
 repository = "https://github.com/equinor/gordo-dataset"
 keywords = ["gordo"]
 classifiers = [
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: GNU Affero General Public License v3",
-        "Natural Language :: English",
-        "Programming Language :: Python :: 3.7",
-    ]
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.7",
+]
 include = [
-    "LICENSE"
+    "LICENSE",
+    "gordo_dataset/data_provider/resources/assets_config.yaml",
 ]
 packages = [
     { include = "gordo_dataset" }
@@ -30,6 +31,12 @@ influxdb = "^5.3.0"
 cachetools = "^4.1.0"
 typing_extensions = "^3.7.4"
 pyarrow = "^0.17.1"
+azure-storage-file-datalake = "^12.1.2"
+azure-identity = "^1.4.0"
+marshmallow = "^3.3.0"
+PyYAML = "^5.3.1"
+scikit-learn = "^0.23.2"
+numexpr = "^2.7.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

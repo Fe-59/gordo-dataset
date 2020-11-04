@@ -4,12 +4,16 @@ from datetime import datetime
 from typing import Iterable, List, Pattern, Any
 
 import pandas as pd
-import numpy as np
 import pytest
 
 from gordo_dataset.data_provider.base import GordoBaseDataProvider
 from gordo_dataset.data_provider import providers
-from gordo_dataset.data_provider.providers import load_series_from_multiple_providers
+from gordo_dataset.data_provider.providers import (
+    load_series_from_multiple_providers,
+    DataLakeProvider,
+)
+from gordo_dataset.file_system.adl2 import ADLGen2FileSystem
+from gordo_dataset.exceptions import ConfigException
 from gordo_dataset.sensor_tag import SensorTag
 
 
@@ -26,7 +30,7 @@ class MockProducerRegExp(GordoBaseDataProvider):
     ) -> Iterable[pd.Series]:
         for tag in tag_list:
             if self.regexp.match(tag.name):
-                yield pd.Series(name=str(self.regexp.pattern), dtype=np.float64)
+                yield pd.Series(name=str(self.regexp.pattern))
             else:
                 raise ValueError(f"Unable to find base path from tag {tag.name}")
 
@@ -127,3 +131,26 @@ def test_data_provider_serializations(
     # Should be able to recreate the object from encoded directly
     cloned = provider.__class__.from_dict(encoded)
     assert type(cloned) == type(provider)
+
+
+def test_data_provider_get_storage():
+    provider = DataLakeProvider(
+        storage={
+            "type": "adl2",
+            "account_name": "test",
+            "file_system_name": "test",
+            "interactive": True,
+        }
+    )
+    storage = provider._get_storage_instance()
+    assert type(storage) is ADLGen2FileSystem
+    assert storage.account_name == "test"
+    assert storage.file_system_name == "test"
+
+
+def test_data_provider_deprecated_argument():
+    with pytest.raises(ConfigException):
+        provider = DataLakeProvider(
+            storage={"type": "adl2",}, store_name="test", interactive=True,
+        )
+        provider._get_storage_instance()

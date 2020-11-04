@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from gordo_dataset import datasets
+import gordo_dataset.datasets as datasets
 
 
 def _get_dataset(config):
