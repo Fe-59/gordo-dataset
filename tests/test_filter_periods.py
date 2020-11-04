@@ -11,12 +11,16 @@ from gordo_dataset.sensor_tag import SensorTag
 
 @pytest.fixture
 def data():
-    data_parquet_path = os.path.join(os.path.dirname(__file__), "data", "filter_periods", "data.parquet")
+    data_parquet_path = os.path.join(
+        os.path.dirname(__file__), "data", "filter_periods", "data.parquet"
+    )
     return pd.read_parquet(data_parquet_path)
+
 
 def test_data_shape(data):
     assert data.shape == (4890, 1)
     assert data["Tag 1"].mean() == 0.5032590860542199
+
 
 def test_filter_periods_typerror(data):
     with pytest.raises(TypeError):

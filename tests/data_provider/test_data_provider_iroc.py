@@ -8,9 +8,7 @@ from dateutil.parser import isoparse  # type: ignore
 from gordo_dataset.data_provider.iroc_reader import IrocReader, read_iroc_file
 from gordo_dataset.sensor_tag import normalize_sensor_tags
 from gordo_dataset.sensor_tag import SensorTag
-from gordo_dataset.data_provider.resource_assets_config import (
-    load_assets_config,
-)
+from gordo_dataset.data_provider.resource_assets_config import load_assets_config
 
 
 IROC_HAPPY_TAG_LIST = [

@@ -8,9 +8,7 @@ from gordo_dataset.data_provider.assets_config import (
     validation_error_exception_message,
     exception_message,
 )
-from gordo_dataset.data_provider.resource_assets_config import (
-    load_assets_config,
-)
+from gordo_dataset.data_provider.resource_assets_config import load_assets_config
 from marshmallow import ValidationError
 
 
