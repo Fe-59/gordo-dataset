@@ -65,7 +65,7 @@ class GordoBaseDataset:
         """
         Construct the dataset using a config from :func:`~GordoBaseDataset.to_dict`
         """
-        from gordo.machine.dataset import datasets
+        from gordo_dataset import datasets
 
         config = copy(config)
         Dataset = getattr(datasets, config.pop("type", "TimeSeriesDataset"))
@@ -84,6 +84,7 @@ class GordoBaseDataset:
         Get metadata about the current state of the dataset
         """
 
+    # TODO Extract to separate function, write unit tests
     def join_timeseries(
         self,
         series_iterable: Iterable[pd.Series],
@@ -191,7 +192,7 @@ class GordoBaseDataset:
     ):
         """
         Takes a single series and resamples it.
-        See :class:`gordo.machine.dataset.base.GordoBaseDataset.join_timeseries`
+        See :class:`gordo_dataset.base.GordoBaseDataset.join_timeseries`
         """
 
         startpoint_sametz = resampling_startpoint.astimezone(tz=series.index[0].tzinfo)

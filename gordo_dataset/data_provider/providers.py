@@ -43,10 +43,10 @@ def load_series_from_multiple_providers(
 ) -> typing.Iterable[pd.DataFrame]:
     """
     Loads the tags in `tag_list` using multiple instances of
-    :class:`gordo.machine.dataset.data_provider.base.GordoBaseDataProvider` provided in the
+    :class:`gordo_dataset.data_provider.base.GordoBaseDataProvider` provided in the
     parameter `data_providers`. Will load a tag from the first data provider in the list
     which claims it. See
-    :func:`gordo.machine.dataset.data_provider.base.GordoBaseDataProvider.load_series`.
+    :func:`gordo_dataset.data_provider.base.GordoBaseDataProvider.load_series`.
 
     Returns
     -------
@@ -120,7 +120,7 @@ class DataLakeProvider(GordoBaseDataProvider):
         storage: Optional[Union[FileSystem, Dict[str, Any]]]
             DataLake config. The structure depends on which DataLake you are going to use.
         assets_config: Optional[AssetsConfig]
-            Uses assets config from `gordo.machine.data_provider.resources` by default
+            Uses assets config from `gordo_dataset.data_provider.resources` by default
         interactive: bool
             To perform authentication interactively, or attempt to do it a
             automatically, in such a case must provide 'del_service_authS_tr'
@@ -161,7 +161,7 @@ class DataLakeProvider(GordoBaseDataProvider):
     ) -> typing.Iterable[pd.Series]:
         """
         See
-        :func:`gordo.machine.dataset.data_provider.base.GordoBaseDataProvider.load_series`
+        :func:`gordo_dataset.data_provider.base.GordoBaseDataProvider.load_series`
         for documentation
         """
         # We create them here so we only try to get a auth-token once we actually need
