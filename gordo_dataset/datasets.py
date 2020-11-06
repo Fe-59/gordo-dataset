@@ -126,7 +126,7 @@ class TimeSeriesDataset(GordoBaseDataset):
             **Note**: If this parameter is ``None`` or ``False``, then _no_ aggregation/resampling is applied to the data.
         row_filter: str or list
             Filter on the rows. Only rows satisfying the filter will be in the dataset.
-            See :func:`gordo.machine.dataset.filter_rows.pandas_filter_rows` for
+            See :func:`gordo_dataset.filter_rows.pandas_filter_rows` for
             further documentation of the filter format.
         known_filter_periods: list
             List of periods to drop in the format [~('2020-04-08 04:00:00+00:00' < index < '2020-04-08 10:00:00+00:00')].
@@ -163,7 +163,7 @@ class TimeSeriesDataset(GordoBaseDataset):
             See `filter_periods` class for details.
         tag_normalizer: Union[str, Callable[..., List[SensorTag]]]
             `default` is only one suitable value for now,
-            uses ``gordo.machine.dataset.sensor_tag.normalize_sensor_tags`` in this case
+            uses ``gordo_dataset.sensor_tag.normalize_sensor_tags`` in this case
 
         """
         self.train_start_date = self._validate_dt(train_start_date)
@@ -364,7 +364,7 @@ class TimeSeriesDataset(GordoBaseDataset):
 class RandomDataset(TimeSeriesDataset):
     """
     Get a TimeSeriesDataset backed by
-    gordo.machine.dataset.data_provider.providers.RandomDataProvider
+    gordo_dataset.data_provider.providers.RandomDataProvider
     """
 
     @compat
