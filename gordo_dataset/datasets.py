@@ -1,25 +1,34 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from typing import Tuple, List, Dict, Union, Optional, Iterable, Callable, Sequence
+from typing import Tuple, List, Dict, Optional, Iterable, Callable, Sequence
 from datetime import datetime
 from dateutil.parser import isoparse
 from functools import wraps
+from typing import Union
 
 import pandas as pd
 import numpy as np
 
-from gordo_dataset.data_provider.providers import (
+from .data_provider.providers import (
     RandomDataProvider,
     DataLakeProvider,
 )
-from gordo_dataset.base import GordoBaseDataset, InsufficientDataError
-from gordo_dataset.data_provider.base import GordoBaseDataProvider
-from gordo_dataset.filter_rows import pandas_filter_rows
-from gordo_dataset.sensor_tag import SensorTag
-from gordo_dataset.sensor_tag import normalize_sensor_tags
-from gordo_dataset.utils import capture_args
-from gordo_dataset.validators import (
+from .base import (
+    GordoBaseDataset,
+    InsufficientDataError,
+    ConfigurationError,
+)
+from .data_provider.base import GordoBaseDataProvider
+from .filter_rows import (
+    pandas_filter_rows,
+    parse_pandas_filter_vars,
+)
+from .filter_periods import FilterPeriods
+from .sensor_tag import SensorTag
+from .sensor_tag import normalize_sensor_tags
+from .utils import capture_args
+from .validators import (
     ValidTagList,
     ValidDatetime,
     ValidDatasetKwargs,
@@ -27,10 +36,6 @@ from gordo_dataset.validators import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-class InsufficientDataAfterRowFilteringError(InsufficientDataError):
-    pass
 
 
 def compat(init):
@@ -67,6 +72,8 @@ class TimeSeriesDataset(GordoBaseDataset):
     data_provider = ValidDataProvider()
     kwargs = ValidDatasetKwargs()
 
+    TAG_NORMALIZERS = {"default": normalize_sensor_tags}
+
     @compat
     @capture_args
     def __init__(
@@ -77,13 +84,19 @@ class TimeSeriesDataset(GordoBaseDataset):
         target_tag_list: Optional[Sequence[Union[str, Dict, SensorTag]]] = None,
         data_provider: Union[GordoBaseDataProvider, dict] = DataLakeProvider(),
         resolution: Optional[str] = "10T",
-        row_filter: str = "",
+        row_filter: Union[str, list] = "",
+        known_filter_periods: Optional[list] = [],
         aggregation_methods: Union[str, List[str], Callable] = "mean",
         row_filter_buffer_size: int = 0,
         asset: Optional[str] = None,
         default_asset: Optional[str] = None,
         n_samples_threshold: int = 0,
-        **_kwargs,
+        low_threshold: Optional[int] = -1000,
+        high_threshold: Optional[int] = 50000,
+        interpolation_method: str = "linear_interpolation",
+        interpolation_limit: str = "8H",
+        filter_periods: Optional[dict] = {},
+        tag_normalizer: Union[str, Callable[..., List[SensorTag]]] = "default",
     ):
         """
         Creates a TimeSeriesDataset backed by a provided dataprovider.
@@ -111,10 +124,13 @@ class TimeSeriesDataset(GordoBaseDataset):
             The bucket size for grouping all incoming time data (e.g. "10T").
             Available strings come from https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#dateoffset-objects
             **Note**: If this parameter is ``None`` or ``False``, then _no_ aggregation/resampling is applied to the data.
-        row_filter: str
+        row_filter: str or list
             Filter on the rows. Only rows satisfying the filter will be in the dataset.
             See :func:`gordo.machine.dataset.filter_rows.pandas_filter_rows` for
             further documentation of the filter format.
+        known_filter_periods: list
+            List of periods to drop in the format [~('2020-04-08 04:00:00+00:00' < index < '2020-04-08 10:00:00+00:00')].
+            Note the time-zone suffix (+00:00), which is required.
         aggregation_methods
             Aggregation method(s) to use for the resampled buckets. If a single
             resample method is provided then the resulting dataframe will have names
@@ -135,7 +151,20 @@ class TimeSeriesDataset(GordoBaseDataset):
             resolvable to a specific asset.
         n_samples_threshold: int = 0
             The threshold at which the generated DataFrame is considered to have too few rows of data.
-        _kwargs
+        interpolation_method: str
+            How should missing values be interpolated. Either forward fill (`ffill`) or by linear
+            interpolation (default, `linear_interpolation`).
+        interpolation_limit: str
+            Parameter sets how long from last valid data point values will be interpolated/forward filled.
+            Default is eight hours (`8H`).
+            If None, all missing values are interpolated/forward filled.
+        fiter_periods: dict
+            Performs a series of algorithms that drops noisy data is specified.
+            See `filter_periods` class for details.
+        tag_normalizer: Union[str, Callable[..., List[SensorTag]]]
+            `default` is only one suitable value for now,
+            uses ``gordo.machine.dataset.sensor_tag.normalize_sensor_tags`` in this case
+
         """
         self.train_start_date = self._validate_dt(train_start_date)
         self.train_end_date = self._validate_dt(train_end_date)
@@ -145,9 +174,20 @@ class TimeSeriesDataset(GordoBaseDataset):
                 f"train_end_date ({self.train_end_date}) must be after train_start_date ({self.train_start_date})"
             )
 
-        self.tag_list = normalize_sensor_tags(list(tag_list), asset, default_asset)
+        if isinstance(tag_normalizer, str):
+            if tag_normalizer not in self.TAG_NORMALIZERS:
+                raise ValueError(
+                    "Unsupported tag_normalizer type '%s'" % tag_normalizer
+                )
+            tag_normalizer = self.TAG_NORMALIZERS[tag_normalizer]
+        self.tag_normalizer = tag_normalizer
+
+        self.asset = asset
+        self.default_asset = default_asset
+
+        self.tag_list = self.tag_normalizer(list(tag_list), asset, default_asset)
         self.target_tag_list = (
-            normalize_sensor_tags(list(target_tag_list), asset, default_asset)
+            self.tag_normalizer(list(target_tag_list), asset, default_asset)
             if target_tag_list
             else self.tag_list.copy()
         )
@@ -160,14 +200,25 @@ class TimeSeriesDataset(GordoBaseDataset):
         self.row_filter = row_filter
         self.aggregation_methods = aggregation_methods
         self.row_filter_buffer_size = row_filter_buffer_size
-        self.asset = asset
         self.n_samples_threshold = n_samples_threshold
+        self.low_threshold = low_threshold
+        self.high_threshold = high_threshold
+        self.interpolation_method = interpolation_method
+        self.interpolation_limit = interpolation_limit
+        self.filter_periods = (
+            FilterPeriods(granularity=self.resolution, **filter_periods)
+            if filter_periods
+            else None
+        )
+        self.known_filter_periods = known_filter_periods
 
         if not self.train_start_date.tzinfo or not self.train_end_date.tzinfo:
             raise ValueError(
                 f"Timestamps ({self.train_start_date}, {self.train_end_date}) need to include timezone "
                 f"information"
             )
+
+        super().__init__()
 
     def to_dict(self):
         params = super().to_dict()
@@ -187,10 +238,24 @@ class TimeSeriesDataset(GordoBaseDataset):
 
     def get_data(self) -> Tuple[pd.DataFrame, Optional[pd.DataFrame]]:
 
+        tag_list = set(self.tag_list + self.target_tag_list)
+
+        triggered_tags = set()
+        if self.row_filter:
+            pandas_filter_tags = set(
+                self.tag_normalizer(
+                    parse_pandas_filter_vars(self.row_filter),
+                    self.asset,
+                    self.default_asset,
+                )
+            )
+            triggered_tags = pandas_filter_tags.difference(tag_list)
+            tag_list.update(triggered_tags)
+
         series_iter: Iterable[pd.Series] = self.data_provider.load_series(
             train_start_date=self.train_start_date,
             train_end_date=self.train_end_date,
-            tag_list=list(set(self.tag_list + self.target_tag_list)),
+            tag_list=list(tag_list),
         )
 
         # Resample if we have a resolution set, otherwise simply join the series.
@@ -201,6 +266,8 @@ class TimeSeriesDataset(GordoBaseDataset):
                 self.train_end_date,
                 self.resolution,
                 aggregation_methods=self.aggregation_methods,
+                interpolation_method=self.interpolation_method,
+                interpolation_limit=self.interpolation_limit,
             )
         else:
             data = pd.concat(series_iter, axis=1, join="inner")
@@ -211,16 +278,54 @@ class TimeSeriesDataset(GordoBaseDataset):
                 f"specified required threshold for number of rows ({self.n_samples_threshold})."
             )
 
+        if self.known_filter_periods:
+            data = pandas_filter_rows(data, self.known_filter_periods, buffer_size=0)
+            if len(data) <= self.n_samples_threshold:
+                raise InsufficientDataError(
+                    f"The length of the filtered DataFrame ({len(data)}) does not exceed the "
+                    f"specified required threshold for number of rows ({self.n_samples_threshold})"
+                    f" after dropping known periods."
+                )
+
         if self.row_filter:
             data = pandas_filter_rows(
                 data, self.row_filter, buffer_size=self.row_filter_buffer_size
             )
-
             if len(data) <= self.n_samples_threshold:
-                raise InsufficientDataAfterRowFilteringError(
-                    f"The length of the genrated DataFrame ({len(data)}) does not exceed the "
+                raise InsufficientDataError(
+                    f"The length of the filtered DataFrame ({len(data)}) does not exceed the "
                     f"specified required threshold for the number of rows ({self.n_samples_threshold}), "
-                    f" after applying the specified row-filter."
+                    f" after applying the specified numerical row-filter."
+                )
+
+        if triggered_tags:
+            triggered_columns = [tag.name for tag in triggered_tags]
+            data = data.drop(columns=triggered_columns)
+
+        if isinstance(self.low_threshold, int) and isinstance(self.high_threshold, int):
+            if self.low_threshold >= self.high_threshold:
+                raise ConfigurationError(
+                    "Low threshold need to be larger than high threshold"
+                )
+            logger.info("Applying global min/max filtering")
+            mask = ((data > self.low_threshold) & (data < self.high_threshold)).all(1)
+            data = data[mask]
+            logger.info("Shape of data after global min/max filtering: %s", data.shape)
+            if len(data) <= self.n_samples_threshold:
+                raise InsufficientDataError(
+                    f"The length of the filtered DataFrame ({len(data)}) does not exceed the "
+                    f"specified required threshold for number of rows ({self.n_samples_threshold})"
+                    f" after filtering global extrema."
+                )
+
+        if self.filter_periods:
+            data, drop_periods, _ = self.filter_periods.filter_data(data)
+            self._metadata["filtered_periods"] = drop_periods
+            if len(data) <= self.n_samples_threshold:
+                raise InsufficientDataError(
+                    f"The length of the filtered DataFrame ({len(data)}) does not exceed the "
+                    f"specified required threshold for number of rows ({self.n_samples_threshold})"
+                    f" after applying nuisance filtering algorithm."
                 )
 
         x_tag_names = [tag.name for tag in self.tag_list]
@@ -271,7 +376,7 @@ class RandomDataset(TimeSeriesDataset):
         tag_list: list,
         **kwargs,
     ):
-        kwargs.pop("data_provider", None)  # Dont care what you ask for, you get random!
+        kwargs.pop("data_provider", None)  # Don't care what you ask for, you get random
         super().__init__(
             data_provider=RandomDataProvider(),
             train_start_date=train_start_date,

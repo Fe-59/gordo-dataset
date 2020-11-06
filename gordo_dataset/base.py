@@ -4,6 +4,7 @@ import abc
 import logging
 from typing import Iterable, Union, List, Callable, Dict, Any, Tuple
 from datetime import datetime
+from copy import copy
 
 import pandas as pd
 import numpy as np
@@ -16,10 +17,16 @@ class InsufficientDataError(ValueError):
     pass
 
 
-class GordoBaseDataset:
+class ConfigurationError(Exception):
+    pass
 
-    _params: Dict[Any, Any] = dict()  # provided by @capture_args on child's __init__
-    _metadata: Dict[Any, Any] = dict()
+
+class GordoBaseDataset:
+    def __init__(self):
+        self._metadata: Dict[Any, Any] = dict()
+        # provided by @capture_args on child's __init__
+        if not hasattr(self, "_params"):
+            self._params = dict()
 
     @abc.abstractmethod
     def get_data(
@@ -58,9 +65,10 @@ class GordoBaseDataset:
         """
         Construct the dataset using a config from :func:`~GordoBaseDataset.to_dict`
         """
-        from gordo_dataset.dataset import datasets
+        from gordo.machine.dataset import datasets
 
-        Dataset = getattr(datasets, config.get("type", "TimeSeriesDataset"))
+        config = copy(config)
+        Dataset = getattr(datasets, config.pop("type", "TimeSeriesDataset"))
         if Dataset is None:
             raise TypeError(f"No dataset of type '{config['type']}'")
 
@@ -83,6 +91,8 @@ class GordoBaseDataset:
         resampling_endpoint: datetime,
         resolution: str,
         aggregation_methods: Union[str, List[str], Callable] = "mean",
+        interpolation_method: str = "linear_interpolation",
+        interpolation_limit: str = "8H",
     ) -> pd.DataFrame:
         """
 
@@ -111,6 +121,13 @@ class GordoBaseDataset:
             and the aggregation method as the second level.
             See :py:func::`pandas.core.resample.Resampler#aggregate` for more
             information on possible aggregation methods.
+        interpolation_method: str
+            How should missing values be interpolated. Either forward fill (`ffill`) or by linear
+            interpolation (default, `linear_interpolation`).
+        interpolation_limit: str
+            Parameter sets how long from last valid data point values will be interpolated/forward filled.
+            Default is eight hours (`8H`).
+            If None, all missing values are interpolated/forward filled.
 
         Returns
         -------
@@ -136,6 +153,8 @@ class GordoBaseDataset:
                     resampling_endpoint=resampling_endpoint,
                     resolution=resolution,
                     aggregation_methods=aggregation_methods,
+                    interpolation_method=interpolation_method,
+                    interpolation_limit=interpolation_limit,
                 )
             except IndexError:
                 missing_data_series.append(series.name)
@@ -167,10 +186,12 @@ class GordoBaseDataset:
         resampling_endpoint: datetime,
         resolution: str,
         aggregation_methods: Union[str, List[str], Callable] = "mean",
+        interpolation_method: str = "linear_interpolation",
+        interpolation_limit: str = "8H",
     ):
         """
         Takes a single series and resamples it.
-        See :class:`gordo_dataset.base.GordoBaseDataset.join_timeseries`
+        See :class:`gordo.machine.dataset.base.GordoBaseDataset.join_timeseries`
         """
 
         startpoint_sametz = resampling_startpoint.astimezone(tz=series.index[0].tzinfo)
@@ -228,4 +249,27 @@ class GordoBaseDataset:
             resampled.columns = pd.MultiIndex.from_product(
                 [[series.name], resampled.columns], names=["tag", "aggregation_method"]
             )
-        return resampled.fillna(method="ffill")
+
+        if interpolation_method not in ["linear_interpolation", "ffill"]:
+            raise ValueError(
+                "Interpolation method should be either linear_interpolation of ffill"
+            )
+
+        if interpolation_limit is not None:
+            limit = int(
+                pd.Timedelta(interpolation_limit).total_seconds()
+                / pd.Timedelta(resolution).total_seconds()
+            )
+
+            if limit <= 0:
+                raise ValueError(
+                    "Interpolation limit must be larger than given resolution"
+                )
+        else:
+            limit = None
+
+        if interpolation_method == "linear_interpolation":
+            return resampled.interpolate(limit=limit).dropna()
+
+        else:
+            return resampled.fillna(method=interpolation_method, limit=limit).dropna()
