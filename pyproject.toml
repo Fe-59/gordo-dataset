@@ -25,7 +25,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.7"
-azure-datalake-store = "^0.0.48"
+azure-datalake-store = "^0.0.51"
 pandas = "^1.0.3"
 influxdb = "^5.3.0"
 cachetools = "^4.1.0"
