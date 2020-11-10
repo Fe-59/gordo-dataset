@@ -13,7 +13,8 @@ from gordo_dataset.exceptions import ConfigException
 
 class ADLSecretsLoader(metaclass=ABCMeta):
     """
-    Base class for loading
+    Base class for ``ADLSecret`` loader.  Such class can be used for loading 
+    ``ADLSecret`` from different kinds of sources: files, environment variables, etc.
     """
 
     @abstractmethod
