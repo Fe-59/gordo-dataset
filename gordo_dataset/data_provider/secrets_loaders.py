@@ -23,7 +23,6 @@ class ADLSecretsLoader(metaclass=ABCMeta):
 
 
 class ADLEnvSecretsLoader(ADLSecretsLoader):
-
     def __init__(self):
         self._secrets_envs = defaultdict(dict)
 
@@ -35,14 +34,18 @@ class ADLEnvSecretsLoader(ADLSecretsLoader):
         if storage_type not in self._secrets_envs:
             raise ConfigException("Unknown storage type '%s'" % storage_type)
         if storage_name not in self._secrets_envs[storage_type]:
-            raise ConfigException("Unknown storage name '%s' for type '%s'" % (storage_type, storage_name))
+            raise ConfigException(
+                "Unknown storage name '%s' for type '%s'" % (storage_type, storage_name)
+            )
         env_var_name = self._secrets_envs[storage_type][storage_name]
         env_var = os.environ.get(env_var_name)
         if not env_var:
             return None
         data = env_var.split(":")
         if len(data) != 3:
-            raise ValueError("Environment variable %s has %d fields, but 3 is required" % (env_var_name, len(data)))
+            raise ValueError(
+                "Environment variable %s has %d fields, but 3 is required"
+                % (env_var_name, len(data))
+            )
         tenant_id, client_id, client_secret = data
         return ADLSecret(tenant_id, client_id, client_secret)
-

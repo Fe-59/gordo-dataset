@@ -67,10 +67,14 @@ class ADLGen2FileSystem(FileSystem):
             credential = InteractiveBrowserCredential()
         else:
             if type(adl_secret) is not ADLSecret:
-                raise ConfigException("Unsupported type for adl_secret '%s'" % type(adl_secret))
+                raise ConfigException(
+                    "Unsupported type for adl_secret '%s'" % type(adl_secret)
+                )
             logger.info("Attempting to use datalake service authentication")
             credential = ClientSecretCredential(
-                tenant_id=adl_secret.tenant_id, client_id=adl_secret.client_id, client_secret=adl_secret.client_secret
+                tenant_id=adl_secret.tenant_id,
+                client_id=adl_secret.client_id,
+                client_secret=adl_secret.client_secret,
             )
         return cls.create_from_credential(
             account_name, file_system_name, credential, **kwargs

@@ -10,7 +10,6 @@ from gordo_dataset.exceptions import ConfigException
 
 
 class TestSecretsLoader(ADLSecretsLoader):
-
     def __init__(self, adl_secret: ADLSecret):
         self.adl_secret = adl_secret
 
@@ -29,19 +28,26 @@ def secrets_loader(adl_secret):
 
 
 def test_create_storage_adl1(secrets_loader, adl_secret):
-    with patch('gordo_dataset.file_system.adl1.ADLGen1FileSystem', MagicMock()) as adl1_mock:
+    with patch(
+        "gordo_dataset.file_system.adl1.ADLGen1FileSystem", MagicMock()
+    ) as adl1_mock:
         create_storage("adl1", secrets_loader=secrets_loader)
-        adl1_mock.create_from_env.assert_called_once_with(store_name='dataplatformdlsprod', adl_secret=adl_secret)
+        adl1_mock.create_from_env.assert_called_once_with(
+            store_name="dataplatformdlsprod", adl_secret=adl_secret
+        )
 
 
 def test_create_storage_adl2(secrets_loader, adl_secret):
-    with patch('gordo_dataset.file_system.adl2.ADLGen2FileSystem', MagicMock()) as adl2_mock:
+    with patch(
+        "gordo_dataset.file_system.adl2.ADLGen2FileSystem", MagicMock()
+    ) as adl2_mock:
         create_storage("adl2", secrets_loader=secrets_loader)
-        adl2_mock.create_from_env.assert_called_once_with(account_name="omniadlseun", file_system_name="dls", adl_secret=adl_secret)
+        adl2_mock.create_from_env.assert_called_once_with(
+            account_name="omniadlseun", file_system_name="dls", adl_secret=adl_secret
+        )
 
 
 def test_create_storage_exception():
-    with patch('gordo_dataset.file_system.adl1.ADLGen1FileSystem', MagicMock()):
+    with patch("gordo_dataset.file_system.adl1.ADLGen1FileSystem", MagicMock()):
         with pytest.raises(ConfigException):
             create_storage("adl1", secrets_loader=dict())
-

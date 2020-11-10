@@ -27,7 +27,7 @@ class ADLGen1FileSystem(FileSystem):
         cls,
         store_name: str,
         interactive: bool = False,
-        adl_secret: Optional[ADLSecret] = None
+        adl_secret: Optional[ADLSecret] = None,
     ) -> "ADLGen1FileSystem":
         """
         Creates ADL Gen1 file system client.
@@ -51,7 +51,9 @@ class ADLGen1FileSystem(FileSystem):
             token = lib.auth()
         else:
             if type(adl_secret) is not ADLSecret:
-                raise ConfigException("Unsupported type for adl_secret '%s'" % type(adl_secret))
+                raise ConfigException(
+                    "Unsupported type for adl_secret '%s'" % type(adl_secret)
+                )
             logger.info("Attempting to use datalake service authentication")
             token = lib.auth(
                 tenant_id=adl_secret.tenant_id,

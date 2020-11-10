@@ -96,9 +96,7 @@ def test_create_from_env_interactive(auth_mock, adl_client_mock):
 
 def test_create_from_env_with_dl_service_auth(auth_mock, adl_client_mock):
     adl_secret = ADLSecret("tenant_id", "client_id", "client_secret")
-    ADLGen1FileSystem.create_from_env(
-        "dlstore", adl_secret=adl_secret
-    )
+    ADLGen1FileSystem.create_from_env("dlstore", adl_secret=adl_secret)
     auth_mock.assert_called_once_with(
         tenant_id="tenant_id",
         client_id="client_id",
@@ -110,9 +108,7 @@ def test_create_from_env_with_dl_service_auth(auth_mock, adl_client_mock):
 
 def test_create_from_env_with_invalid_dl_service(auth_mock, adl_client_mock):
     with pytest.raises(ConfigException):
-        ADLGen1FileSystem.create_from_env(
-            "dlstore", adl_secret=None
-        )
+        ADLGen1FileSystem.create_from_env("dlstore", adl_secret=None)
 
 
 def test_open_in_bin_mode(adl_client_mock):
