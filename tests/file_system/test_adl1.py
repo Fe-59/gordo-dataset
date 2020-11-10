@@ -6,6 +6,8 @@ from datetime import datetime
 
 from gordo_dataset.file_system.adl1 import ADLGen1FileSystem
 from gordo_dataset.file_system.base import FileType, FileInfo
+from gordo_dataset.file_system.azure import ADLSecret
+from gordo_dataset.exceptions import ConfigException
 
 
 @pytest.fixture
@@ -93,8 +95,9 @@ def test_create_from_env_interactive(auth_mock, adl_client_mock):
 
 
 def test_create_from_env_with_dl_service_auth(auth_mock, adl_client_mock):
+    adl_secret = ADLSecret("tenant_id", "client_id", "client_secret")
     ADLGen1FileSystem.create_from_env(
-        "dlstore", dl_service_auth="tenant_id:client_id:client_secret"
+        "dlstore", adl_secret=adl_secret
     )
     auth_mock.assert_called_once_with(
         tenant_id="tenant_id",
@@ -105,31 +108,11 @@ def test_create_from_env_with_dl_service_auth(auth_mock, adl_client_mock):
     adl_client_mock.assert_called_once_with("123", store_name="dlstore")
 
 
-def test_create_from_env_with_dl_service_auth_env(auth_mock, adl_client_mock):
-    with patch("os.environ.get") as get:
-        get.return_value = "tenant_id:client_id:client_secret"
-        ADLGen1FileSystem.create_from_env("dlstore")
-        auth_mock.assert_called_once_with(
-            tenant_id="tenant_id",
-            client_id="client_id",
-            client_secret="client_secret",
-            resource="https://datalake.azure.net/",
-        )
-        adl_client_mock.assert_called_once_with("123", store_name="dlstore")
-
-
 def test_create_from_env_with_invalid_dl_service(auth_mock, adl_client_mock):
-    with pytest.raises(ValueError):
+    with pytest.raises(ConfigException):
         ADLGen1FileSystem.create_from_env(
-            "dlstore", dl_service_auth="tenant_id:client_id"
+            "dlstore", adl_secret=None
         )
-
-
-def test_create_from_env_with_empty_dl_service_auth_env(auth_mock, adl_client_mock):
-    with patch("os.environ.get") as get:
-        get.return_value = None
-        with pytest.raises(ValueError):
-            ADLGen1FileSystem.create_from_env("dlstore")
 
 
 def test_open_in_bin_mode(adl_client_mock):
