@@ -23,6 +23,15 @@ class ADLSecretsLoader(metaclass=ABCMeta):
 
 
 class ADLEnvSecretsLoader(ADLSecretsLoader):
+    """
+    Loading ``ADLSecret`` from environment variables.
+
+    Examples
+    --------
+    >>> secrets_loader = ADLEnvSecretsLoader().from_env("fs", "storage", "TEST_ENV_VAR")
+    >>> secrets_loader.get_secret("fs", "storage")
+    None
+    """
     def __init__(self):
         self._secrets_envs = defaultdict(dict)
 
