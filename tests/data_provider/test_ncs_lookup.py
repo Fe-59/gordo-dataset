@@ -77,6 +77,9 @@ def dir_tree():
         ("path1/tag5", FileInfo(FileType.DIRECTORY, 0)),
         ("path1/tag5/parquet", FileInfo(FileType.DIRECTORY, 0)),
         ("path1/tag5/parquet/tag5_2020.parquet", FileInfo(FileType.FILE, 1000)),
+        ("path3/tag10", FileInfo(FileType.DIRECTORY, 0)),
+        ("path3/tag10/parquet", FileInfo(FileType.DIRECTORY, 0)),
+        ("path3/tag10/parquet/tag10_2020.parquet", FileInfo(FileType.FILE, 10**10)),#Big 10 Gb file
         ("base/path", FileInfo(FileType.DIRECTORY, 0)),
         ("base/path/tag1", FileInfo(FileType.DIRECTORY, 0)),
         ("base/path/tag3", FileInfo(FileType.DIRECTORY, 0)),
@@ -208,6 +211,15 @@ def test_files_lookup_asgard(default_ncs_lookup: NcsLookup):
             CsvFileType,
         ),
     }
+
+
+def test_max_file_size(default_ncs_lookup: NcsLookup):
+    tag = SensorTag("tag10", "asset")
+    years = [2020]
+    result = reduce_tag_locations(
+        [default_ncs_lookup.files_lookup("path3/tag10", tag, years)]
+    )
+    assert not result
 
 
 def test_files_lookup_tag2(default_ncs_lookup: NcsLookup):
