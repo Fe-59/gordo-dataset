@@ -14,6 +14,7 @@ from gordo_dataset.utils import capture_args
 
 from .base import GordoBaseDataProvider
 from .assets_config import AssetsConfig
+from .constants import DEFAULT_MAX_FILE_SIZE
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ class IrocReader(GordoBaseDataProvider):
         assets_config: Optional[AssetsConfig],
         threads: int = 50,
         storage_name: Optional[str] = None,
+        max_file_size: Optional[int] = DEFAULT_MAX_FILE_SIZE,
         **kwargs,  # Do not remove this
     ):
         """
@@ -42,6 +44,7 @@ class IrocReader(GordoBaseDataProvider):
         if storage_name is None and storage is not None:
             storage_name = storage.name
         self.storage_name = storage_name
+        self.max_file_size = max_file_size
         logger.info(f"Starting IROC reader with {self.threads} threads")
 
     @property
@@ -131,7 +134,8 @@ class IrocReader(GordoBaseDataProvider):
                 for b_path in all_base_paths:
                     for path, file_info in self.storage.walk(b_path):
                         if file_info.file_type == FileType.FILE:
-                            yield path
+                            if self.max_file_size is None or file_info.size < self.max_file_size:
+                                yield path
 
         with ThreadPoolExecutor(max_workers=self.threads) as executor:
             # Pandas.concat makes the generator into a list anyway, so no extra memory

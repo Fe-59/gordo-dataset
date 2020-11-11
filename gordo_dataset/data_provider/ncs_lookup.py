@@ -10,6 +10,7 @@ from .file_type import FileType
 from .ncs_contants import NCS_READER_NAME
 from .ncs_file_type import NcsFileType, load_ncs_file_types
 from .assets_config import AssetsConfig, PathSpec
+from .constants import DEFAULT_MAX_FILE_SIZE
 
 from typing import List, Iterable, Tuple, Optional, Dict, Iterator
 from collections import OrderedDict
@@ -68,6 +69,7 @@ class NcsLookup:
         storage: FileSystem,
         ncs_type_names: Optional[Iterable[str]] = None,
         storage_name: Optional[str] = None,
+        max_file_size: Optional[int] = DEFAULT_MAX_FILE_SIZE,
     ) -> "NcsLookup":
         ncs_file_types = load_ncs_file_types(ncs_type_names)
         return cls(storage, ncs_file_types, storage_name)
@@ -77,12 +79,14 @@ class NcsLookup:
         storage: FileSystem,
         ncs_file_types: List[NcsFileType],
         storage_name: Optional[str] = None,
+        max_file_size: Optional[int] = DEFAULT_MAX_FILE_SIZE,
     ):
         self.storage = storage
         self.ncs_file_types = ncs_file_types
         if storage_name is None:
             storage_name = storage.name
         self.storage_name = storage_name
+        self.max_file_size = max_file_size
 
     @staticmethod
     def quote_tag_name(tag_name: str) -> str:
@@ -118,6 +122,18 @@ class NcsLookup:
         for tag in tags.values():
             yield tag, None
 
+    def _validate_file(self, full_path: str):
+        storage = self.storage
+        if self.max_file_size is not None:
+            file_info = storage.info(full_path)
+            if file_info.size > self.max_file_size:
+                logger.debug(
+                    "Size of file '%s' is %d bytes that bigger than the maximum file size %d bytes"
+                    % (full_path, file_info.size, self.max_file_size)
+                )
+                return False
+        return True
+
     def files_lookup(
         self, tag_dir: str, tag: SensorTag, years: Iterable[int]
     ) -> TagLocations:
@@ -146,7 +162,7 @@ class NcsLookup:
             for ncs_file_type in ncs_file_types:
                 for path in ncs_file_type.paths(storage, tag_name, year):
                     full_path = storage.join(tag_dir, path)
-                    if storage.exists(full_path):
+                    if storage.exists(full_path) and self._validate_file(full_path):
                         file_type = ncs_file_type.file_type
                         locations[year] = Location(full_path, file_type)
                         found = True
