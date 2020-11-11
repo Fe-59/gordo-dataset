@@ -155,7 +155,6 @@ class NcsLookup:
         storage = self.storage
         ncs_file_types = self.ncs_file_types
         tag_name = self.quote_tag_name(tag.name)
-        not_existing_years = set(years)
         locations = {}
         for year in years:
             found = False
@@ -168,7 +167,6 @@ class NcsLookup:
                         found = True
                         break
                 if found:
-                    not_existing_years.remove(year)
                     break
         return TagLocations(tag, locations if locations else None)
 
