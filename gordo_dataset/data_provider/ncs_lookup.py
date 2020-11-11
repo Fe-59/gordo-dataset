@@ -10,6 +10,7 @@ from .file_type import FileType
 from .ncs_contants import NCS_READER_NAME
 from .ncs_file_type import NcsFileType, load_ncs_file_types
 from .assets_config import AssetsConfig, PathSpec
+from .constants import DEFAULT_MAX_FILE_SIZE
 
 from typing import List, Iterable, Tuple, Optional, Dict, Iterator
 from collections import OrderedDict
@@ -55,10 +56,6 @@ class TagLocations:
             locations = self.locations
             for year in self.years():
                 yield self.tag, year, locations[year]
-
-
-# Default maximum file size is 1 Gb
-DEFAULT_MAX_FILE_SIZE = 10 ** 9
 
 
 class NcsLookup:
