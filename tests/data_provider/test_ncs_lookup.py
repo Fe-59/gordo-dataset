@@ -65,36 +65,42 @@ def test_tag_locations_empty():
 def dir_tree():
     return [
         # tag.name = Ásgarðr
-        ("path/%C3%81sgar%C3%B0r", FileType.DIRECTORY),
-        ("path/%C3%81sgar%C3%B0r/%C3%81sgar%C3%B0r_2019.csv", FileType.FILE),
-        ("path/tag2", FileType.DIRECTORY),
-        ("path/tag2/parquet", FileType.DIRECTORY),
-        ("path/tag2/parquet/tag2_2020.parquet", FileType.FILE),
-        ("path/tag3", FileType.DIRECTORY),
-        ("path/tag3/parquet", FileType.DIRECTORY),
-        ("path/tag3/parquet/tag3_2020.parquet", FileType.FILE),
-        ("path/tag3/tag3_2020.csv", FileType.FILE),
-        ("path1/tag5", FileType.DIRECTORY),
-        ("path1/tag5/parquet", FileType.DIRECTORY),
-        ("path1/tag5/parquet/tag5_2020.parquet", FileType.FILE),
-        ("base/path", FileType.DIRECTORY),
-        ("base/path/tag1", FileType.DIRECTORY),
-        ("base/path/tag3", FileType.DIRECTORY),
+        ("path/%C3%81sgar%C3%B0r", FileInfo(FileType.DIRECTORY, 0)),
+        ("path/%C3%81sgar%C3%B0r/%C3%81sgar%C3%B0r_2019.csv", FileInfo(FileType.FILE, 1000)),
+        ("path/tag2", FileInfo(FileType.DIRECTORY, 0)),
+        ("path/tag2/parquet", FileInfo(FileType.DIRECTORY, 0)),
+        ("path/tag2/parquet/tag2_2020.parquet", FileInfo(FileType.FILE, 1000)),
+        ("path/tag3", FileInfo(FileType.DIRECTORY, 0)),
+        ("path/tag3/parquet", FileInfo(FileType.DIRECTORY, 0)),
+        ("path/tag3/parquet/tag3_2020.parquet", FileInfo(FileType.FILE, 1000)),
+        ("path/tag3/tag3_2020.csv", FileInfo(FileType.FILE, 1000)),
+        ("path1/tag5", FileInfo(FileType.DIRECTORY, 0)),
+        ("path1/tag5/parquet", FileInfo(FileType.DIRECTORY, 0)),
+        ("path1/tag5/parquet/tag5_2020.parquet", FileInfo(FileType.FILE, 1000)),
+        ("base/path", FileInfo(FileType.DIRECTORY, 0)),
+        ("base/path/tag1", FileInfo(FileType.DIRECTORY, 0)),
+        ("base/path/tag3", FileInfo(FileType.DIRECTORY, 0)),
     ]
 
 
 @pytest.fixture
 def mock_file_system(dir_tree):
     def ls_side_effect(path, with_info=True):
-        for file_path, file_type in dir_tree:
+        for file_path, file_info in dir_tree:
             dir_path, _ = posixpath.split(file_path)
             if dir_path == path:
-                yield file_path, FileInfo(file_type, 0) if with_info else None
+                yield file_path, file_info if with_info else None
+
+    def info_side_effect(path):
+        for file_path, file_info in dir_tree:
+            if file_path == path:
+                return file_info
+        return None
 
     def walk_side_effect(base_path, with_info=True):
-        for file_path, file_type in dir_tree:
+        for file_path, file_info in dir_tree:
             if file_path.find(base_path) == 0:
-                yield file_path, FileInfo(file_type, 0) if with_info else None
+                yield file_path, file_info if with_info else None
 
     def exists_side_effect(path):
         for file_path, _ in dir_tree:
@@ -106,6 +112,7 @@ def mock_file_system(dir_tree):
     mock.exists.side_effect = exists_side_effect
     mock.ls.side_effect = ls_side_effect
     mock.walk.side_effect = walk_side_effect
+    mock.info.side_effect = info_side_effect
     mock.join.side_effect = default_join
     mock.split.side_effect = posixpath.split
     return mock
@@ -119,12 +126,13 @@ def test_mock_file_system(mock_file_system):
         ("path/tag3", FileInfo(file_type=FileType.DIRECTORY, size=0),),
     ]
     result = list(mock_file_system.walk("path/tag2"))
+    print(result)
     assert result == [
         ("path/tag2", FileInfo(file_type=FileType.DIRECTORY, size=0),),
         ("path/tag2/parquet", FileInfo(file_type=FileType.DIRECTORY, size=0),),
         (
             "path/tag2/parquet/tag2_2020.parquet",
-            FileInfo(file_type=FileType.FILE, size=0),
+            FileInfo(file_type=FileType.FILE, size=1000),
         ),
     ]
     assert mock_file_system.exists("path/%C3%81sgar%C3%B0r")
@@ -142,6 +150,15 @@ def test_mock_file_system(mock_file_system):
             ),
         )
     ]
+    result = mock_file_system.info("path1/tag5/parquet/tag5_2020.parquet")
+    assert result == FileInfo(
+                file_type=FileType.FILE,
+                size=1000,
+                access_time=None,
+                modify_time=None,
+                create_time=None,
+            )
+
 
 
 @pytest.fixture
