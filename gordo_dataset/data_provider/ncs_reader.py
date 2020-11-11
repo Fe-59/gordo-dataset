@@ -16,6 +16,7 @@ from .assets_config import AssetsConfig
 from .ncs_contants import NCS_READER_NAME
 from .ncs_file_type import load_ncs_file_types
 from .ncs_lookup import NcsLookup, TagLocations
+from .constants import DEFAULT_MAX_FILE_SIZE
 
 from ..exceptions import ConfigException
 
@@ -37,6 +38,7 @@ class NcsReader(GordoBaseDataProvider):
         lookup_for: Optional[List[str]] = None,
         storage_name: Optional[str] = None,
         ncs_lookup: Optional[NcsLookup] = None,
+        max_file_size: Optional[int] = DEFAULT_MAX_FILE_SIZE,
         **kwargs,  # Do not remove this
     ):
         """
@@ -63,6 +65,8 @@ class NcsReader(GordoBaseDataProvider):
             Used by ``AssetsConfig``
         ncs_lookup: Optional[NcsLookup]
             Creates with current ``storage``, ``storage_name`` and ``lookup_for`` if None
+        max_file_size: Optional[int]
+            Maximal file size
 
         Notes
         -----
@@ -84,15 +88,15 @@ class NcsReader(GordoBaseDataProvider):
             storage_name = storage.name
         self.storage_name: str = storage_name
         if ncs_lookup is None:
-            ncs_lookup = self.create_ncs_lookup()
+            ncs_lookup = self.create_ncs_lookup(max_file_size)
         elif isinstance(ncs_lookup, NcsLookup):
             raise ConfigException("ncs_lookup should be instance of NcsLookup")
         self.ncs_lookup = ncs_lookup
         logger.info(f"Starting NCS reader with {self.threads} threads")
 
-    def create_ncs_lookup(self) -> NcsLookup:
+    def create_ncs_lookup(self, max_file_size: Optional[int]) -> NcsLookup:
         ncs_file_types = load_ncs_file_types(self.lookup_for)
-        return NcsLookup(self.storage, ncs_file_types, self.storage_name)
+        return NcsLookup(self.storage, ncs_file_types, self.storage_name, max_file_size=max_file_size)
 
     @property
     def reader_name(self) -> str:
