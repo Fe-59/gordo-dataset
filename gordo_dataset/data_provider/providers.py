@@ -154,6 +154,7 @@ class DataLakeProvider(GordoBaseDataProvider):
 
         self.storage = storage
         self._storage_instance: Optional[FileSystem] = None
+        self._sub_dataproviders = None
 
     def load_series(
         self,
@@ -214,6 +215,11 @@ class DataLakeProvider(GordoBaseDataProvider):
         return self._storage_instance
 
     def _get_sub_dataproviders(self):
+        if self._sub_dataproviders is None:
+            self._sub_dataproviders = self._create_sub_dataproviders()
+        return self._sub_dataproviders
+
+    def _create_sub_dataproviders(self):
         storage = self._get_storage_instance()
         assets_config = self.assets_config
         data_providers = []
