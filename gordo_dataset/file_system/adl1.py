@@ -5,8 +5,10 @@ from io import TextIOWrapper
 from azure.datalake.store import core, lib
 from typing import Optional, Iterable, IO, Tuple
 
+from gordo_dataset.exceptions import ConfigException
+
 from .base import FileSystem, FileInfo, FileType
-from .utils import get_env_secret_values
+from .azure import ADLSecret
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +26,8 @@ class ADLGen1FileSystem(FileSystem):
     def create_from_env(
         cls,
         store_name: str,
-        dl_service_auth: Optional[str] = None,
         interactive: bool = False,
-        dl_service_auth_env: str = "DL_SERVICE_AUTH_STR",
+        adl_secret: Optional[ADLSecret] = None,
     ) -> "ADLGen1FileSystem":
         """
         Creates ADL Gen1 file system client.
@@ -35,12 +36,10 @@ class ADLGen1FileSystem(FileSystem):
         ----------
         store_name: str
             Name of datalake store.
-        dl_service_auth: str
-            Authentication string to use. `:` separated values of: tenant_id, client_id, client_secret.
         interactive: bool
             If true then use interactive authentication
-        dl_service_auth_env: str
-            Environment variable which contains dl_service_auth. DL_SERVICE_AUTH_STR by default
+        adl_secret: ADLSecret
+            Azure authentication information
 
         Returns
         -------
@@ -51,14 +50,15 @@ class ADLGen1FileSystem(FileSystem):
             logger.info("Attempting to use interactive azure authentication")
             token = lib.auth()
         else:
-            logger.info(f"Attempting to use datalake service authentication")
-            tenant_id, client_id, client_secret = get_env_secret_values(
-                dl_service_auth, dl_service_auth_env
-            )
+            if type(adl_secret) is not ADLSecret:
+                raise ConfigException(
+                    "Unsupported type for adl_secret '%s'" % type(adl_secret)
+                )
+            logger.info("Attempting to use datalake service authentication")
             token = lib.auth(
-                tenant_id=tenant_id,
-                client_id=client_id,
-                client_secret=client_secret,
+                tenant_id=adl_secret.tenant_id,
+                client_id=adl_secret.client_id,
+                client_secret=adl_secret.client_secret,
                 resource="https://datalake.azure.net/",
             )
 

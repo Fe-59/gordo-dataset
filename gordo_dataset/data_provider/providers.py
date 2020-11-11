@@ -130,7 +130,7 @@ class DataLakeProvider(GordoBaseDataProvider):
         dl_service_auth_str: Optional[str]
             string on the format 'tenant_id:service_id:service_secret'. To
             perform authentication automatically; will default to
-            DL_SERVICE_AUTH_STR env var or None. Only for DataLake Gen1 and will be deprecated in new versions
+            DL_SERVICE_AUTH_STR env var or None. Unsupported argument
 
         .. deprecated::
             Arguments `interactive`, `storename`, `dl_service_auth_str`
@@ -138,6 +138,9 @@ class DataLakeProvider(GordoBaseDataProvider):
         if assets_config is None:
             assets_config = load_assets_config()
         self.assets_config = assets_config
+
+        if "secrets_loader" in kwargs:
+            raise ConfigException("Unsupported parameter secrets_loader")
         self.kwargs = kwargs
 
         # This arguments only preserved for back-compatibility reasons and will be removed in future versions of gordo
@@ -147,7 +150,7 @@ class DataLakeProvider(GordoBaseDataProvider):
         if storename is not None:
             self.adl1_kwargs["store_name"] = storename
         if dl_service_auth_str is not None:
-            self.adl1_kwargs["dl_service_auth_str"] = dl_service_auth_str
+            raise ConfigException("Unsupported parameter dl_service_auth_str")
 
         self.storage = storage
         self._storage_instance: Optional[FileSystem] = None

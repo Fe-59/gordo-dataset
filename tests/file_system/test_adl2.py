@@ -7,6 +7,7 @@ from datetime import datetime
 from azure.storage.filedatalake import PathProperties
 from gordo_dataset.file_system.adl2 import ADLGen2FileSystem
 from gordo_dataset.file_system.base import FileType, FileInfo
+from gordo_dataset.file_system.azure import ADLSecret
 from azure.identity import ClientSecretCredential, InteractiveBrowserCredential
 
 
@@ -37,12 +38,11 @@ def test_create_from_env_interactive_browser_credential():
 
 
 def test_create_from_env_client_secret_credential():
-    with patch("os.environ.get") as get_mock:
-        get_mock.return_value = "tenant_id:client_id:client_secret"
-        fs = ADLGen2FileSystem.create_from_env("dlaccount", "fs", interactive=False)
-        assert isinstance(fs.file_system_client.credential, ClientSecretCredential)
-        assert fs.account_name == "dlaccount"
-        assert fs.file_system_name == "fs"
+    adl_secret = ADLSecret("tenant_id", "client_id", "client_secret")
+    fs = ADLGen2FileSystem.create_from_env("dlaccount", "fs", adl_secret=adl_secret)
+    assert isinstance(fs.file_system_client.credential, ClientSecretCredential)
+    assert fs.account_name == "dlaccount"
+    assert fs.file_system_name == "fs"
 
 
 def test_open(downloader_mock, fs_client_mock):

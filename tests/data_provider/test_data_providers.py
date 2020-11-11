@@ -133,21 +133,6 @@ def test_data_provider_serializations(
     assert type(cloned) == type(provider)
 
 
-def test_data_provider_get_storage():
-    provider = DataLakeProvider(
-        storage={
-            "type": "adl2",
-            "account_name": "test",
-            "file_system_name": "test",
-            "interactive": True,
-        }
-    )
-    storage = provider._get_storage_instance()
-    assert type(storage) is ADLGen2FileSystem
-    assert storage.account_name == "test"
-    assert storage.file_system_name == "test"
-
-
 def test_data_provider_deprecated_argument():
     with pytest.raises(ConfigException):
         provider = DataLakeProvider(
