@@ -48,8 +48,8 @@ class GordoBaseDataset:
                 """
         if not hasattr(self, "_params"):
             raise AttributeError(
-                f"Failed to lookup init parameters, ensure the "
-                f"object's __init__ is decorated with 'capture_args'"
+                "Failed to lookup init parameters, ensure the "
+                "object's __init__ is decorated with 'capture_args'"
             )
         # Update dict with the class
         params = self._params

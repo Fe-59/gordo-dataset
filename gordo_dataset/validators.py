@@ -127,5 +127,5 @@ class ValidTagList(BaseDescriptor):
             or not isinstance(value, list)
             or not any(isinstance(value[0], inst) for inst in (str, dict, SensorTag))
         ):
-            raise ValueError(f"Requires setting a non-empty list of strings")
+            raise ValueError("Requires setting a non-empty list of strings")
         instance.__dict__[self.name] = value
