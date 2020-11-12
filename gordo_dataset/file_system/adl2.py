@@ -70,6 +70,7 @@ class ADLGen2FileSystem(FileSystem):
                 raise ConfigException(
                     "Unsupported type for adl_secret '%s'" % type(adl_secret)
                 )
+            adl_secret = cast(ADLSecret, adl_secret)
             logger.info("Attempting to use datalake service authentication")
             credential = ClientSecretCredential(
                 tenant_id=adl_secret.tenant_id,

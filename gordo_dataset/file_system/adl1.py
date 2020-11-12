@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 from io import TextIOWrapper
 from azure.datalake.store import core, lib
-from typing import Optional, Iterable, IO, Tuple
+from typing import Optional, Iterable, IO, Tuple, cast
 
 from gordo_dataset.exceptions import ConfigException
 
@@ -54,6 +54,7 @@ class ADLGen1FileSystem(FileSystem):
                 raise ConfigException(
                     "Unsupported type for adl_secret '%s'" % type(adl_secret)
                 )
+            adl_secret = cast(ADLSecret, adl_secret)
             logger.info("Attempting to use datalake service authentication")
             token = lib.auth(
                 tenant_id=adl_secret.tenant_id,

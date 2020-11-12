@@ -8,7 +8,7 @@ on:
       - '**'
 
 jobs:
-  quality-check:
+  test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -40,5 +40,38 @@ jobs:
       - name: Install Dependencies
         run: poetry install
 
+      - name: Check safety
+        run: poetry run safety check --full-report
+
       - name: Running tests
         run: poetry run pytest
+
+      - name: Save Coverage
+        run: |
+          mkdir -p /tmp/coverage-reports
+          mv ./coverage.xml /tmp/coverage-reports/${{ matrix.component }}-coverage.xml
+          mv ./junit/junit.xml /tmp/coverage-reports/${{ matrix.component }}-junit.xml
+
+      - uses: actions/upload-artifact@v1
+        with:
+          name: Coverage Reports
+          path: /tmp/coverage-reports
+
+  upload-coverage-reports:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v1
+
+      - uses: actions/download-artifact@v1
+        with:
+          name: Coverage Reports
+          path: /tmp/coverage-reports
+
+      - name: Copy Coverage Reports
+        run: cp /tmp/coverage-reports/*.xml .
+
+      - uses: codecov/codecov-action@v1
+        with:
+          token: a8ef5bf0-4a4c-47ea-ad45-263fa7495935
+          fail_ci_if_error: false
