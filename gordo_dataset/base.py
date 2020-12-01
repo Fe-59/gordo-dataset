@@ -2,13 +2,14 @@
 
 import abc
 import logging
-from typing import Iterable, Union, List, Callable, Dict, Any, Tuple
+from typing import Iterable, Union, List, Callable, Dict, Any, Tuple, Optional
 from datetime import datetime
 from copy import copy
 
 import pandas as pd
 import numpy as np
 
+from .exceptions import ConfigException
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ class InsufficientDataError(ValueError):
     pass
 
 
-class ConfigurationError(Exception):
+class ConfigurationError(ConfigException):
     pass
 
 

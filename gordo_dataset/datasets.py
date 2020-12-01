@@ -305,7 +305,11 @@ class TimeSeriesDataset(GordoBaseDataset):
         if isinstance(self.low_threshold, int) and isinstance(self.high_threshold, int):
             if self.low_threshold >= self.high_threshold:
                 raise ConfigurationError(
-                    "Low threshold need to be larger than high threshold"
+                    "Low threshold need to be larger than high threshold",
+                    {
+                        "low_threshold": self.low_threshold,
+                        "high_threshold": self.high_threshold,
+                    },
                 )
             logger.info("Applying global min/max filtering")
             mask = ((data > self.low_threshold) & (data < self.high_threshold)).all(1)

@@ -31,6 +31,7 @@ class ADLEnvSecretsLoader(ADLSecretsLoader):
     >>> secrets_loader = ADLEnvSecretsLoader().from_env("fs", "storage", "TEST_ENV_VAR")
     >>> secrets_loader.get_secret("fs", "storage")
     """
+
     def __init__(self):
         self._secrets_envs = defaultdict(dict)
 
@@ -40,7 +41,10 @@ class ADLEnvSecretsLoader(ADLSecretsLoader):
 
     def get_secret(self, storage_type: str, storage_name: str) -> Optional[ADLSecret]:
         if storage_type not in self._secrets_envs:
-            raise ConfigException("Unknown storage type '%s'" % storage_type)
+            raise ConfigException(
+                "Unknown storage type '%s'" % storage_type,
+                {"storage_type": storage_type},
+            )
         if storage_name not in self._secrets_envs[storage_type]:
             raise ConfigException(
                 "Unknown storage name '%s' for type '%s'" % (storage_type, storage_name)

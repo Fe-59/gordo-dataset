@@ -66,7 +66,10 @@ def dir_tree():
     return [
         # tag.name = Ásgarðr
         ("path/%C3%81sgar%C3%B0r", FileInfo(FileType.DIRECTORY, 0)),
-        ("path/%C3%81sgar%C3%B0r/%C3%81sgar%C3%B0r_2019.csv", FileInfo(FileType.FILE, 1000)),
+        (
+            "path/%C3%81sgar%C3%B0r/%C3%81sgar%C3%B0r_2019.csv",
+            FileInfo(FileType.FILE, 1000),
+        ),
         ("path/tag2", FileInfo(FileType.DIRECTORY, 0)),
         ("path/tag2/parquet", FileInfo(FileType.DIRECTORY, 0)),
         ("path/tag2/parquet/tag2_2020.parquet", FileInfo(FileType.FILE, 1000)),
@@ -79,7 +82,10 @@ def dir_tree():
         ("path1/tag5/parquet/tag5_2020.parquet", FileInfo(FileType.FILE, 1000)),
         ("path3/tag10", FileInfo(FileType.DIRECTORY, 0)),
         ("path3/tag10/parquet", FileInfo(FileType.DIRECTORY, 0)),
-        ("path3/tag10/parquet/tag10_2020.parquet", FileInfo(FileType.FILE, 10**10)),#Big 10 Gb file
+        (
+            "path3/tag10/parquet/tag10_2020.parquet",
+            FileInfo(FileType.FILE, 10 ** 10),
+        ),  # Big 10 Gb file
         ("base/path", FileInfo(FileType.DIRECTORY, 0)),
         ("base/path/tag1", FileInfo(FileType.DIRECTORY, 0)),
         ("base/path/tag3", FileInfo(FileType.DIRECTORY, 0)),
@@ -155,13 +161,12 @@ def test_mock_file_system(mock_file_system):
     ]
     result = mock_file_system.info("path1/tag5/parquet/tag5_2020.parquet")
     assert result == FileInfo(
-                file_type=FileType.FILE,
-                size=1000,
-                access_time=None,
-                modify_time=None,
-                create_time=None,
-            )
-
+        file_type=FileType.FILE,
+        size=1000,
+        access_time=None,
+        modify_time=None,
+        create_time=None,
+    )
 
 
 @pytest.fixture

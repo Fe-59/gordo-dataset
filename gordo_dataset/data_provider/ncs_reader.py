@@ -90,13 +90,17 @@ class NcsReader(GordoBaseDataProvider):
         if ncs_lookup is None:
             ncs_lookup = self.create_ncs_lookup(max_file_size)
         elif isinstance(ncs_lookup, NcsLookup):
-            raise ConfigException("ncs_lookup should be instance of NcsLookup")
+            raise ConfigException(
+                "ncs_lookup should be instance of NcsLookup", {"ncs_lookup": ncs_lookup}
+            )
         self.ncs_lookup = ncs_lookup
         logger.info(f"Starting NCS reader with {self.threads} threads")
 
     def create_ncs_lookup(self, max_file_size: Optional[int]) -> NcsLookup:
         ncs_file_types = load_ncs_file_types(self.lookup_for)
-        return NcsLookup(self.storage, ncs_file_types, self.storage_name, max_file_size=max_file_size)
+        return NcsLookup(
+            self.storage, ncs_file_types, self.storage_name, max_file_size=max_file_size
+        )
 
     @property
     def reader_name(self) -> str:

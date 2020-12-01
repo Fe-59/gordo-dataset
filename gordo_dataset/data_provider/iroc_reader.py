@@ -134,7 +134,10 @@ class IrocReader(GordoBaseDataProvider):
                 for b_path in all_base_paths:
                     for path, file_info in self.storage.walk(b_path):
                         if file_info.file_type == FileType.FILE:
-                            if self.max_file_size is None or file_info.size < self.max_file_size:
+                            if (
+                                self.max_file_size is None
+                                or file_info.size < self.max_file_size
+                            ):
                                 yield path
 
         with ThreadPoolExecutor(max_workers=self.threads) as executor:

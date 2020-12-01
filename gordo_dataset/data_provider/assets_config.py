@@ -8,6 +8,10 @@ from ..exceptions import ConfigException
 from ..file_system.base import FileSystem
 
 
+class AssetsConfigException(ConfigException):
+    pass
+
+
 class AssetItemSchema(Schema):
     name = fields.Str(required=True)
     path = fields.Str(required=True)
@@ -124,7 +128,7 @@ class AssetsConfig:
             valid_config = cls.schema.load(raw_config)
         except ValidationError as e:
             message = validation_error_exception_message(e)
-            raise ConfigException(exception_message(message, file_path))
+            raise AssetsConfigException(exception_message(message, file_path))
         storages = {}
         for storage, reader_items in valid_config["storages"].items():
             assets: Dict[str, PathSpec] = {}
@@ -140,7 +144,7 @@ class AssetsConfig:
                             f" and base directory '{base_dir}' with asset from "
                             f"reader '{dup.reader}' and base directory '{dup.base_dir}'"
                         )
-                        raise ConfigException(exception_message(message))
+                        raise AssetsConfigException(exception_message(message))
                     path_spec = PathSpec(reader, base_dir, asset["path"])
                     assets[name] = path_spec
             storages[storage] = assets

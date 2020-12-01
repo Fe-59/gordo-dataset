@@ -49,8 +49,9 @@ def create_storage(
         secrets_loader = DEFAULT_SECRETS_LOADER
     if not isinstance(secrets_loader, ADLSecretsLoader):
         raise ConfigException(
-            "secrets_loader should be instance of ADLSecretsLoader and not %s type",
-            type(secrets_loader),
+            "secrets_loader should be instance of ADLSecretsLoader and not %s type"
+            % type(secrets_loader),
+            {"secrets_loader": secrets_loader},
         )
     storage: FileSystem
     if storage_type == "adl1":

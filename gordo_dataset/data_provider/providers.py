@@ -140,7 +140,10 @@ class DataLakeProvider(GordoBaseDataProvider):
         self.assets_config = assets_config
 
         if "secrets_loader" in kwargs:
-            raise ConfigException("Unsupported parameter secrets_loader")
+            raise ConfigException(
+                "Unsupported parameter secrets_loader",
+                {"secrets_loader": kwargs["secrets_loader"]},
+            )
         self.kwargs = kwargs
 
         # This arguments only preserved for back-compatibility reasons and will be removed in future versions of gordo
@@ -150,7 +153,10 @@ class DataLakeProvider(GordoBaseDataProvider):
         if storename is not None:
             self.adl1_kwargs["store_name"] = storename
         if dl_service_auth_str is not None:
-            raise ConfigException("Unsupported parameter dl_service_auth_str")
+            raise ConfigException(
+                "Unsupported parameter dl_service_auth_str",
+                {"dl_service_auth_str": ...},
+            )
 
         self.storage = storage
         self._storage_instance: Optional[FileSystem] = None
@@ -190,10 +196,15 @@ class DataLakeProvider(GordoBaseDataProvider):
                 return adl1_kwarg
         else:
             if self.adl1_kwargs:
-                arguments = ", ".join(self.adl1_kwargs.keys())
+                adl1_kwargs = self.adl1_kwargs
+                if "dl_service_auth_str" in adl1_kwargs:
+                    adl1_kwargs = copy(self.adl1_kwargs)
+                    adl1_kwargs["dl_service_auth_str"] = ...
+                arguments = ", ".join(adl1_kwargs.keys())
                 raise ConfigException(
                     "%s does no support%s by storage '%s'"
-                    % (arguments, "s" if len(arguments) > 1 else "", storage_type)
+                    % (arguments, "s" if len(arguments) > 1 else "", storage_type),
+                    adl1_kwargs,
                 )
         return kwarg
 
@@ -394,6 +405,8 @@ class InfluxDataProvider(GordoBaseDataProvider):
     def can_handle_tag(self, tag: SensorTag):
         return tag.name in self.get_list_of_tags()
 
+
+class LocalDataProvider(GordoBaseDataProvider):
 
 class RandomDataProvider(GordoBaseDataProvider):
     """
