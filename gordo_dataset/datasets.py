@@ -256,6 +256,7 @@ class TimeSeriesDataset(GordoBaseDataset):
             train_start_date=self.train_start_date,
             train_end_date=self.train_end_date,
             tag_list=list(tag_list),
+            resolution=self.resolution,
         )
 
         # Resample if we have a resolution set, otherwise simply join the series.
