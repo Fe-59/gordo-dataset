@@ -120,6 +120,8 @@ class NcsReader(GordoBaseDataProvider):
         train_end_date: datetime,
         tag_list: List[SensorTag],
         dry_run: Optional[bool] = False,
+        resolution: Optional[str] = None,
+        aggregation_method: Optional[str] = None,
     ) -> Iterable[pd.Series]:
         """
         See GordoBaseDataProvider for documentation

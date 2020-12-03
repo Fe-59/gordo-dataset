@@ -40,6 +40,8 @@ def load_series_from_multiple_providers(
     train_end_date: datetime,
     tag_list: typing.List[SensorTag],
     dry_run: typing.Optional[bool] = False,
+    resolution: Optional[str] = None,
+    aggregation_method: Optional[str] = None,
 ) -> typing.Iterable[pd.DataFrame]:
     """
     Loads the tags in `tag_list` using multiple instances of
@@ -81,6 +83,8 @@ def load_series_from_multiple_providers(
                 train_end_date=train_end_date,
                 tag_list=readers_tags,
                 dry_run=dry_run,
+                resolution=resolution,
+                aggregation_method=aggregation_method,
             ):
                 yield series
     logger.debug(
@@ -162,6 +166,8 @@ class DataLakeProvider(GordoBaseDataProvider):
         train_end_date: datetime,
         tag_list: typing.List[SensorTag],
         dry_run: typing.Optional[bool] = False,
+        resolution: Optional[str] = None,
+        aggregation_method: Optional[str] = None,
     ) -> typing.Iterable[pd.Series]:
         """
         See
@@ -177,7 +183,7 @@ class DataLakeProvider(GordoBaseDataProvider):
         data_providers = self._get_sub_dataproviders()
 
         yield from load_series_from_multiple_providers(
-            data_providers, train_start_date, train_end_date, tag_list, dry_run
+            data_providers, train_start_date, train_end_date, tag_list, dry_run, resolution, aggregation_method,
         )
 
     def _adl1_back_compatible_kwarg(
@@ -300,6 +306,8 @@ class InfluxDataProvider(GordoBaseDataProvider):
         train_end_date: datetime,
         tag_list: typing.List[SensorTag],
         dry_run: typing.Optional[bool] = False,
+        resolution: Optional[str] = None,
+        aggregation_method: Optional[str] = None,
     ) -> typing.Iterable[pd.Series]:
         """
         See GordoBaseDataProvider for documentation
@@ -429,6 +437,8 @@ class RandomDataProvider(GordoBaseDataProvider):
         train_end_date: datetime,
         tag_list: typing.List[SensorTag],
         dry_run: typing.Optional[bool] = False,
+        resolution: Optional[str] = None,
+        aggregation_method: Optional[str] = None,
     ) -> typing.Iterable[pd.Series]:
         if dry_run:
             raise NotImplementedError(
