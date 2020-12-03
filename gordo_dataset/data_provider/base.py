@@ -20,8 +20,7 @@ class GordoBaseDataProvider(object):
         train_end_date: datetime,
         tag_list: List[SensorTag],
         dry_run: Optional[bool] = False,
-        resolution: Optional[str] = None,
-        aggregation_method: Optional[str] = None,
+        **kwargs,
     ) -> Iterable[pd.Series]:
         """
         Load the required data as an iterable of series where each
@@ -38,16 +37,8 @@ class GordoBaseDataProvider(object):
         dry_run: Optional[bool]
             Set to true to perform a "dry run" of the loading.
             Up to the implementations to determine what that means.
-        resolution: Optional[str]
-            Time window for datapoints aggregation in "DataProvider".
-            Will be used if "DataProvider" supports such functionality.
-            Used with "aggregation_method" param.
-            Example: "10m" (datapoints aggregated for each 10m: 01:00,01:10,..)
-        aggregation_method: Optional[str]
-            Method for data-aggregation in "DataProvider".
-            Will be used if "DataProvider" supports such functionality.
-            Takes aggregation time-window from "resolution" param.
-            Examples: "avr,", "min", "max" etc.
+        kwargs: Dict
+            With these - additional data might be passed by data_provider.
 
         Returns
         -------

@@ -409,8 +409,7 @@ class MockDataProvider(GordoBaseDataProvider):
         train_end_date: datetime,
         tag_list: List[SensorTag],
         dry_run: Optional[bool] = False,
-        resolution: Optional[str] = None,
-        aggregation_method: Optional[str] = None,
+        **kwargs,
     ) -> Iterable[pd.Series]:
         self.last_tag_list = tag_list
         index = pd.date_range(train_start_date, train_end_date, freq="s")

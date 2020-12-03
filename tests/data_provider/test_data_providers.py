@@ -27,8 +27,7 @@ class MockProducerRegExp(GordoBaseDataProvider):
         train_end_date: datetime,
         tag_list: List[SensorTag],
         dry_run=False,
-        resolution: Optional[str] = None,
-        aggregation_method: Optional[str] = None,
+        **kwargs,
     ) -> Iterable[pd.Series]:
         for tag in tag_list:
             if self.regexp.match(tag.name):
