@@ -1,7 +1,7 @@
 import re
 import unittest
 from datetime import datetime
-from typing import Iterable, List, Pattern, Any
+from typing import Iterable, List, Pattern, Any, Optional
 
 import pandas as pd
 import pytest
@@ -27,6 +27,7 @@ class MockProducerRegExp(GordoBaseDataProvider):
         train_end_date: datetime,
         tag_list: List[SensorTag],
         dry_run=False,
+        **kwargs,
     ) -> Iterable[pd.Series]:
         for tag in tag_list:
             if self.regexp.match(tag.name):

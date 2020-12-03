@@ -60,6 +60,7 @@ class IrocReader(GordoBaseDataProvider):
         train_end_date: datetime,
         tag_list: List[SensorTag],
         dry_run: Optional[bool] = False,
+        **kwargs,
     ):
         """
         See GordoBaseDataProvider for documentation

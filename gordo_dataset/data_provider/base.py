@@ -20,6 +20,7 @@ class GordoBaseDataProvider(object):
         train_end_date: datetime,
         tag_list: List[SensorTag],
         dry_run: Optional[bool] = False,
+        **kwargs,
     ) -> Iterable[pd.Series]:
         """
         Load the required data as an iterable of series where each
@@ -36,6 +37,8 @@ class GordoBaseDataProvider(object):
         dry_run: Optional[bool]
             Set to true to perform a "dry run" of the loading.
             Up to the implementations to determine what that means.
+        kwargs: Dict
+            With these - additional data might be passed by data_provider.
 
         Returns
         -------

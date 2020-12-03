@@ -40,6 +40,7 @@ def load_series_from_multiple_providers(
     train_end_date: datetime,
     tag_list: typing.List[SensorTag],
     dry_run: typing.Optional[bool] = False,
+    **kwargs,
 ) -> typing.Iterable[pd.DataFrame]:
     """
     Loads the tags in `tag_list` using multiple instances of
@@ -81,6 +82,7 @@ def load_series_from_multiple_providers(
                 train_end_date=train_end_date,
                 tag_list=readers_tags,
                 dry_run=dry_run,
+                **kwargs,
             ):
                 yield series
     logger.debug(
@@ -162,6 +164,7 @@ class DataLakeProvider(GordoBaseDataProvider):
         train_end_date: datetime,
         tag_list: typing.List[SensorTag],
         dry_run: typing.Optional[bool] = False,
+        **kwargs
     ) -> typing.Iterable[pd.Series]:
         """
         See
@@ -177,7 +180,7 @@ class DataLakeProvider(GordoBaseDataProvider):
         data_providers = self._get_sub_dataproviders()
 
         yield from load_series_from_multiple_providers(
-            data_providers, train_start_date, train_end_date, tag_list, dry_run
+            data_providers, train_start_date, train_end_date, tag_list, dry_run, **kwargs,
         )
 
     def _adl1_back_compatible_kwarg(
@@ -275,7 +278,7 @@ class InfluxDataProvider(GordoBaseDataProvider):
                 # importing TimeSeriesDataset, which imports this provider
                 # which would have imported Client via traversal of the __init__
                 # which would then try to import TimeSeriesDataset again.
-                from gordo.client.utils import influx_client_from_uri
+                from gordo_dataset.utils import influx_client_from_uri
 
                 self.influx_client = influx_client_from_uri(  # type: ignore
                     uri,
@@ -300,6 +303,7 @@ class InfluxDataProvider(GordoBaseDataProvider):
         train_end_date: datetime,
         tag_list: typing.List[SensorTag],
         dry_run: typing.Optional[bool] = False,
+        **kwargs
     ) -> typing.Iterable[pd.Series]:
         """
         See GordoBaseDataProvider for documentation
@@ -429,6 +433,7 @@ class RandomDataProvider(GordoBaseDataProvider):
         train_end_date: datetime,
         tag_list: typing.List[SensorTag],
         dry_run: typing.Optional[bool] = False,
+        **kwargs
     ) -> typing.Iterable[pd.Series]:
         if dry_run:
             raise NotImplementedError(
