@@ -175,6 +175,9 @@ class ADLGen2FileSystem(FileSystem):
             properties = file_client.get_file_properties()
         except ResourceNotFoundError:
             raise FileNotFoundError(path)
+        except Exception as e:
+            logger.debug("Exception %s(%s)", e.__class__.__name__, path)
+            raise
         content_settings = properties["content_settings"]
         if content_settings.get("content_type", None):
             file_type = FileType.FILE
