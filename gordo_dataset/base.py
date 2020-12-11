@@ -8,6 +8,7 @@ from copy import copy
 
 import pandas as pd
 import numpy as np
+import xarray as xr
 
 
 logger = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ class GordoBaseDataset:
     @abc.abstractmethod
     def get_data(
         self,
-    ) -> Tuple[Union[np.ndarray, pd.DataFrame], Union[np.ndarray, pd.DataFrame]]:
+    ) -> Tuple[Union[np.ndarray, pd.DataFrame, xr.Dataset], Union[np.ndarray, pd.DataFrame, xr.Dataset]]:
         """
         Return X, y data as numpy or pandas' dataframes given current state
         """
