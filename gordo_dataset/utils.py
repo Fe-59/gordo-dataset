@@ -137,7 +137,6 @@ def influx_client_from_uri(
     return client
 
 
-# TODO Extract to separate function, write unit tests
 def join_timeseries(
     series_iterable: Iterable[pd.Series],
     resampling_startpoint: datetime,
