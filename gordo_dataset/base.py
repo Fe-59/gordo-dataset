@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import abc
+from abc import ABCMeta, abstractmethod
 import logging
 from typing import Union, Dict, Any, Tuple
 from copy import copy
@@ -17,14 +17,14 @@ class ConfigurationError(Exception):
     pass
 
 
-class GordoBaseDataset:
+class GordoBaseDataset(metaclass=ABCMeta):
     def __init__(self):
         self._metadata: Dict[Any, Any] = dict()
         # provided by @capture_args on child's __init__
         if not hasattr(self, "_params"):
             self._params = dict()
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_data(
         self,
     ) -> Tuple[Union[np.ndarray, pd.DataFrame, xr.DataArray], Union[np.ndarray, pd.DataFrame, xr.DataArray]]:
@@ -32,7 +32,6 @@ class GordoBaseDataset:
         Return X, y data as numpy or pandas' dataframes given current state
         """
 
-    @abc.abstractmethod
     def to_dict(self) -> dict:
         """
         Serialize this object into a dict representation, which can be used to
@@ -56,7 +55,6 @@ class GordoBaseDataset:
         return params
 
     @classmethod
-    @abc.abstractmethod
     def from_dict(cls, config: Dict[str, Any]) -> "GordoBaseDataset":
         """
         Construct the dataset using a config from :func:`~GordoBaseDataset.to_dict`
@@ -74,10 +72,9 @@ class GordoBaseDataset:
         config.setdefault("target_tag_list", config["tag_list"])
         return Dataset(**config)
 
-    @abc.abstractmethod
     def get_metadata(self):
         """
         Get metadata about the current state of the dataset
         """
-
+        return dict()
 
