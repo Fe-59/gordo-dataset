@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gordo-dataset"
-version = "2.2.0"
+version = "2.3.1"
 description = "Gordo datasets and data providers"
 authors = ["Equinor ASA <fg_gpl@equinor.com>"]
 
@@ -37,6 +37,7 @@ marshmallow = "^3.3.0"
 PyYAML = "^5.3.1"
 scikit-learn = "^0.23.2"
 numexpr = "^2.7.1"
+xarray = "^0.16.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.1"

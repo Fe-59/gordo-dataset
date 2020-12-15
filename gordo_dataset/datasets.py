@@ -14,9 +14,9 @@ from .data_provider.providers import (
     RandomDataProvider,
     DataLakeProvider,
 )
+from .exceptions import InsufficientDataError
 from .base import (
     GordoBaseDataset,
-    InsufficientDataError,
     ConfigurationError,
 )
 from .data_provider.base import GordoBaseDataProvider
@@ -27,7 +27,7 @@ from .filter_rows import (
 from .filter_periods import FilterPeriods
 from .sensor_tag import SensorTag
 from .sensor_tag import normalize_sensor_tags
-from .utils import capture_args
+from .utils import capture_args, join_timeseries
 from .validators import (
     ValidTagList,
     ValidDatetime,
@@ -261,7 +261,7 @@ class TimeSeriesDataset(GordoBaseDataset):
 
         # Resample if we have a resolution set, otherwise simply join the series.
         if self.resolution:
-            data = self.join_timeseries(
+            data, metadata = join_timeseries(
                 series_iter,
                 self.train_start_date,
                 self.train_end_date,
@@ -270,6 +270,7 @@ class TimeSeriesDataset(GordoBaseDataset):
                 interpolation_method=self.interpolation_method,
                 interpolation_limit=self.interpolation_limit,
             )
+            self._metadata["tag_loading_metadata"] = metadata
         else:
             data = pd.concat(series_iter, axis=1, join="inner")
 

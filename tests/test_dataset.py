@@ -14,8 +14,10 @@ from gordo_dataset.datasets import (
     RandomDataset,
     TimeSeriesDataset,
 )
-from gordo_dataset.base import GordoBaseDataset, InsufficientDataError
+from gordo_dataset.base import GordoBaseDataset
+from gordo_dataset.exceptions import InsufficientDataError
 from gordo_dataset.sensor_tag import SensorTag
+from gordo_dataset.utils import join_timeseries
 
 
 @pytest.fixture
@@ -93,7 +95,7 @@ def test_random_dataset_attrs(dataset):
     assert isinstance(metadata, dict)
 
 
-def test_join_timeseries(dataset):
+def test_join_timeseries():
 
     timeseries_list, latest_start, earliest_end = create_timeseries_list()
 
@@ -103,9 +105,11 @@ def test_join_timeseries(dataset):
     timedelta = pd.Timedelta("7 minutes")
     resampling_start = dateutil.parser.isoparse("2017-12-25 06:00:00Z")
     resampling_end = dateutil.parser.isoparse("2018-01-15 08:00:00Z")
-    all_in_frame = dataset.join_timeseries(
+    all_in_frame, metadata = join_timeseries(
         timeseries_list, resampling_start, resampling_end, frequency
     )
+    metadata_keys = sorted(metadata.keys())
+    assert ['aggregate_metadata', 'ts-hours', 'ts-minutes', 'ts-seconds'] == metadata_keys
 
     # Check that first resulting resampled, joined row is within "frequency" from
     # the real first data point
@@ -146,18 +150,20 @@ def test_join_timeseries_empty_series(value, n_rows, resolution, error):
         TimeSeriesDataset(**kwargs).get_data()
 
 
-def test_join_timeseries_nonutcstart(dataset):
+def test_join_timeseries_nonutcstart():
     timeseries_list, latest_start, earliest_end = create_timeseries_list()
     frequency = "7T"
     resampling_start = dateutil.parser.isoparse("2017-12-25 06:00:00+07:00")
     resampling_end = dateutil.parser.isoparse("2018-01-12 13:07:00+07:00")
-    all_in_frame = dataset.join_timeseries(
+    all_in_frame, metadata = join_timeseries(
         timeseries_list, resampling_start, resampling_end, frequency
     )
+    metadata_keys = sorted(metadata.keys())
+    assert ['aggregate_metadata', 'ts-hours', 'ts-minutes', 'ts-seconds'] == metadata_keys
     assert len(all_in_frame) == 481
 
 
-def test_join_timeseries_with_gaps(dataset):
+def test_join_timeseries_with_gaps():
 
     timeseries_list, latest_start, earliest_end = create_timeseries_list()
 
@@ -173,20 +179,22 @@ def test_join_timeseries_with_gaps(dataset):
     resampling_start = dateutil.parser.isoparse("2017-12-25 06:00:00Z")
     resampling_end = dateutil.parser.isoparse("2018-01-12 07:00:00Z")
 
-    all_in_frame = dataset.join_timeseries(
+    all_in_frame, metadata = join_timeseries(
         timeseries_with_holes, resampling_start, resampling_end, frequency
     )
+    metadata_keys = sorted(metadata.keys())
+    assert ['aggregate_metadata', 'ts-hours', 'ts-minutes', 'ts-seconds'] == metadata_keys
     assert all_in_frame.index[0] == pd.Timestamp(latest_start)
     assert all_in_frame.index[-1] <= pd.Timestamp(resampling_end)
 
 
-def test_join_timeseries_with_interpolation_method_wrong_interpolation_method(dataset):
+def test_join_timeseries_with_interpolation_method_wrong_interpolation_method():
     timeseries_list, latest_start, earliest_end = create_timeseries_list()
     resampling_start = dateutil.parser.isoparse("2017-01-01 06:00:00+07:00")
     resampling_end = dateutil.parser.isoparse("2018-02-01 13:07:00+07:00")
 
     with pytest.raises(ValueError):
-        dataset.join_timeseries(
+        join_timeseries(
             timeseries_list,
             resampling_start,
             resampling_end,
@@ -196,13 +204,13 @@ def test_join_timeseries_with_interpolation_method_wrong_interpolation_method(da
         )
 
 
-def test_join_timeseries_with_interpolation_method_wrong_interpolation_limit(dataset):
+def test_join_timeseries_with_interpolation_method_wrong_interpolation_limit():
     timeseries_list, latest_start, earliest_end = create_timeseries_list()
     resampling_start = dateutil.parser.isoparse("2017-01-01 06:00:00+07:00")
     resampling_end = dateutil.parser.isoparse("2018-02-01 13:07:00+07:00")
 
     with pytest.raises(ValueError):
-        dataset.join_timeseries(
+        join_timeseries(
             timeseries_list,
             resampling_start,
             resampling_end,
@@ -212,12 +220,12 @@ def test_join_timeseries_with_interpolation_method_wrong_interpolation_limit(dat
         )
 
 
-def test_join_timeseries_with_interpolation_method_linear_interpolation(dataset):
+def test_join_timeseries_with_interpolation_method_linear_interpolation():
     timeseries_list, latest_start, earliest_end = create_timeseries_list()
     resampling_start = dateutil.parser.isoparse("2017-01-01 06:00:00+07:00")
     resampling_end = dateutil.parser.isoparse("2018-02-01 13:07:00+07:00")
 
-    all_in_frame = dataset.join_timeseries(
+    all_in_frame, metadata = join_timeseries(
         timeseries_list,
         resampling_start,
         resampling_end,
@@ -225,17 +233,17 @@ def test_join_timeseries_with_interpolation_method_linear_interpolation(dataset)
         interpolation_method="linear_interpolation",
         interpolation_limit="8H",
     )
+    metadata_keys = sorted(metadata.keys())
+    assert ['aggregate_metadata', 'ts-hours', 'ts-minutes', 'ts-seconds'] == metadata_keys
     assert len(all_in_frame) == 337
 
 
-def test_join_timeseries_with_interpolation_method_linear_interpolation_no_limit(
-    dataset,
-):
+def test_join_timeseries_with_interpolation_method_linear_interpolation_no_limit():
     timeseries_list, latest_start, earliest_end = create_timeseries_list()
     resampling_start = dateutil.parser.isoparse("2017-01-01 06:00:00+07:00")
     resampling_end = dateutil.parser.isoparse("2018-02-01 13:07:00+07:00")
 
-    all_in_frame = dataset.join_timeseries(
+    all_in_frame, metadata = join_timeseries(
         timeseries_list,
         resampling_start,
         resampling_end,
@@ -243,6 +251,8 @@ def test_join_timeseries_with_interpolation_method_linear_interpolation_no_limit
         interpolation_method="linear_interpolation",
         interpolation_limit=None,
     )
+    metadata_keys = sorted(metadata.keys())
+    assert ['aggregate_metadata', 'ts-hours', 'ts-minutes', 'ts-seconds'] == metadata_keys
     assert len(all_in_frame) == 4177
 
 
