@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import importlib
 
+from copy import deepcopy
+
 
 def _get_dataset(config):
     """
     Return a GordoBaseDataSet object of a certain type, given a config dict
     """
-    dataset_config = dict(config)
+    dataset_config = deepcopy(config)
     kind = dataset_config.pop("type", "")
     if '.' in kind:
         module_name, class_name = kind.rsplit(".", 1)
