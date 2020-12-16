@@ -93,6 +93,7 @@ class GordoBaseDataProvider(object):
         Provider = None
         if '.' in provider_type:
             module_name, class_name = provider_type.rsplit(".", 1)
+            # TODO validate module_name
             Provider = getattr(importlib.import_module(module_name), class_name)
         else:
             from gordo_dataset.data_provider import providers

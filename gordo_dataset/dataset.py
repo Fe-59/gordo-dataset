@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-
-import gordo_dataset.datasets as datasets
+import importlib
 
 
 def _get_dataset(config):
@@ -9,7 +8,13 @@ def _get_dataset(config):
     """
     dataset_config = dict(config)
     kind = dataset_config.pop("type", "")
-    Dataset = getattr(datasets, kind, None)
+    if '.' in kind:
+        module_name, class_name = kind.rsplit(".", 1)
+        # TODO validate module_name
+        Dataset = getattr(importlib.import_module(module_name), class_name)
+    else:
+        import gordo_dataset.datasets as datasets
+        Dataset = getattr(datasets, kind)
     if Dataset is None:
         raise ValueError(f'Dataset type "{kind}" is not supported!')
 

@@ -18,6 +18,7 @@ from gordo_dataset.base import GordoBaseDataset
 from gordo_dataset.exceptions import InsufficientDataError
 from gordo_dataset.sensor_tag import SensorTag
 from gordo_dataset.utils import join_timeseries
+from gordo_dataset.dataset import _get_dataset
 
 
 @pytest.fixture
@@ -574,3 +575,13 @@ def test_trigger_tags(mock_tag_normalizer):
     }
     assert set(X.columns.values) == {"Tag 1", "Tag 2"}
     assert set(y.columns.values) == {"Tag 5"}
+
+
+def test_get_dataset_with_full_import():
+    dataset = _get_dataset({
+        "type": "gordo_dataset.datasets.RandomDataset",
+        "train_start_date": "2017-12-25 06:00:00Z",
+        "train_end_date": "2017-12-29 06:00:00Z",
+        "tag_list": [SensorTag("Tag 1", None), SensorTag("Tag 2", None)]
+    })
+    assert type(dataset) is RandomDataset
