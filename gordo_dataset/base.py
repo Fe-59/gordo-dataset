@@ -48,7 +48,11 @@ class GordoBaseDataset(metaclass=ABCMeta):
             )
         # Update dict with the class
         params = self._params
-        params["type"] = self.__class__.__name__
+        params_type = ""
+        if hasattr(self, '__module__'):
+            params_type = self.__module__ + "."
+        params_type += self.__class__.__name__
+        params["type"] = params_type
         for key, value in params.items():
             if hasattr(value, "to_dict"):
                 params[key] = value.to_dict()
