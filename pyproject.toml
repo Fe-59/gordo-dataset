@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gordo-dataset"
-version = "2.3.3"
+version = "2.3.4"
 description = "Gordo datasets and data providers"
 authors = ["Equinor ASA <fg_gpl@equinor.com>"]
 
