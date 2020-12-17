@@ -40,4 +40,4 @@ def test_to_dict():
     assert config["train_start_date"] == "2020-01-01T00:00:00+00:00"
     assert config["train_end_date"] == "2020-03-01T00:00:00+00:00"
     assert config["tag_list"] == tag_list
-    assert config["type"] == "TimeSeriesDataset"
+    assert config["type"] == "gordo_dataset.datasets.TimeSeriesDataset"
