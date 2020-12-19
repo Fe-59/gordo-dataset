@@ -3,11 +3,12 @@
 from abc import ABCMeta, abstractmethod
 import logging
 from typing import Union, Dict, Any, Tuple
-from copy import copy
 
 import pandas as pd
 import numpy as np
 import xarray as xr
+
+from .dataset import _get_dataset
 
 
 logger = logging.getLogger(__name__)
@@ -63,18 +64,7 @@ class GordoBaseDataset(metaclass=ABCMeta):
         """
         Construct the dataset using a config from :func:`~GordoBaseDataset.to_dict`
         """
-        from gordo_dataset import datasets
-
-        config = copy(config)
-        Dataset = getattr(datasets, config.pop("type", "TimeSeriesDataset"))
-        if Dataset is None:
-            raise TypeError(f"No dataset of type '{config['type']}'")
-
-        # TODO: Here for compatibility, but @compate should take care of it, remove later
-        if "tags" in config:
-            config["tag_list"] = config.pop("tags")
-        config.setdefault("target_tag_list", config["tag_list"])
-        return Dataset(**config)
+        return _get_dataset(config)
 
     def get_metadata(self):
         """
