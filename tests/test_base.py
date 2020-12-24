@@ -26,6 +26,23 @@ def test_from_dict():
     assert dataset.tag_list == tag_list
 
 
+def test_from_dict_with_empty_type():
+    train_start_date = datetime(2020, 1, 1, tzinfo=tzutc())
+    train_end_date = datetime(2020, 3, 1, tzinfo=tzutc())
+    tag_list = [SensorTag("tag1", "asset"), SensorTag("tag2", "asset")]
+
+    config = {
+        "train_start_date": train_start_date,
+        "train_end_date": train_end_date,
+        "tag_list": tag_list,
+    }
+    dataset = GordoBaseDataset.from_dict(config)
+    assert type(dataset) is TimeSeriesDataset
+    assert dataset.train_start_date == train_start_date
+    assert dataset.train_end_date == train_end_date
+    assert dataset.tag_list == tag_list
+
+
 def test_to_dict():
     train_start_date = datetime(2020, 1, 1, tzinfo=tzutc())
     train_end_date = datetime(2020, 3, 1, tzinfo=tzutc())
