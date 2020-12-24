@@ -20,7 +20,7 @@ def _get_dataset(config):
         import gordo_dataset.datasets as datasets
         if not kind:
             kind = "TimeSeriesDataset"
-        if not hasattr(module, class_name):
+        if not hasattr(datasets, kind):
             raise ConfigException("Unable to find class %s in module gordo_dataset.datasets" % kind)
         Dataset = getattr(datasets, kind)
     if Dataset is None:
