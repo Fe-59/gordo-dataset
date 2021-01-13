@@ -97,6 +97,7 @@ class TimeSeriesDataset(GordoBaseDataset):
         interpolation_limit: str = "8H",
         filter_periods: Optional[dict] = {},
         tag_normalizer: Union[str, Callable[..., List[SensorTag]]] = "default",
+        process_metadata: bool = True,
     ):
         """
         Creates a TimeSeriesDataset backed by a provided dataprovider.
@@ -164,7 +165,8 @@ class TimeSeriesDataset(GordoBaseDataset):
         tag_normalizer: Union[str, Callable[..., List[SensorTag]]]
             `default` is only one suitable value for now,
             uses ``gordo_dataset.sensor_tag.normalize_sensor_tags`` in this case
-
+        process_metadata: bool
+            Processing metadata if true
         """
         self.train_start_date = self._validate_dt(train_start_date)
         self.train_end_date = self._validate_dt(train_end_date)
@@ -211,6 +213,7 @@ class TimeSeriesDataset(GordoBaseDataset):
             else None
         )
         self.known_filter_periods = known_filter_periods
+        self.process_metadata = process_metadata
 
         if not self.train_start_date.tzinfo or not self.train_end_date.tzinfo:
             raise ValueError(
@@ -270,7 +273,8 @@ class TimeSeriesDataset(GordoBaseDataset):
                 interpolation_method=self.interpolation_method,
                 interpolation_limit=self.interpolation_limit,
             )
-            self._metadata["tag_loading_metadata"] = metadata
+            if self.process_metadata:
+                self._metadata["tag_loading_metadata"] = metadata
         else:
             data = pd.concat(series_iter, axis=1, join="inner")
 
@@ -322,7 +326,8 @@ class TimeSeriesDataset(GordoBaseDataset):
 
         if self.filter_periods:
             data, drop_periods, _ = self.filter_periods.filter_data(data)
-            self._metadata["filtered_periods"] = drop_periods
+            if self.process_metadata:
+                self._metadata["filtered_periods"] = drop_periods
             if len(data) <= self.n_samples_threshold:
                 raise InsufficientDataError(
                     f"The length of the filtered DataFrame ({len(data)}) does not exceed the "
@@ -336,26 +341,27 @@ class TimeSeriesDataset(GordoBaseDataset):
         X = data[x_tag_names]
         y = data[y_tag_names] if self.target_tag_list else None
 
-        if X.first_valid_index():
-            self._metadata["train_start_date_actual"] = X.index[0]
-            self._metadata["train_end_date_actual"] = X.index[-1]
+        if self.process_metadata:
+            if X.first_valid_index():
+                self._metadata["train_start_date_actual"] = X.index[0]
+                self._metadata["train_end_date_actual"] = X.index[-1]
 
-        self._metadata["summary_statistics"] = X.describe().to_dict()
-        hists = dict()
-        for tag in X.columns:
-            step = round((X[tag].max() - X[tag].min()) / 100, 6)
-            if step < 9e-07:
-                hists[str(tag)] = "{}"
-                continue
-            outs = pd.cut(
-                X[tag],
-                bins=np.arange(
-                    round(X[tag].min() - step, 6), round(X[tag].max() + step, 6), step,
-                ),
-                retbins=False,
-            )
-            hists[str(tag)] = outs.value_counts().sort_index().to_json(orient="index")
-        self._metadata["x_hist"] = hists
+            self._metadata["summary_statistics"] = X.describe().to_dict()
+            hists = dict()
+            for tag in X.columns:
+                step = round((X[tag].max() - X[tag].min()) / 100, 6)
+                if step < 9e-07:
+                    hists[str(tag)] = "{}"
+                    continue
+                outs = pd.cut(
+                    X[tag],
+                    bins=np.arange(
+                        round(X[tag].min() - step, 6), round(X[tag].max() + step, 6), step,
+                    ),
+                    retbins=False,
+                )
+                hists[str(tag)] = outs.value_counts().sort_index().to_json(orient="index")
+            self._metadata["x_hist"] = hists
 
         return X, y
 
