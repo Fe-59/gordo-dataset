@@ -13,7 +13,7 @@ from gordo_dataset.exceptions import ConfigException
 
 class ADLSecretsLoader(metaclass=ABCMeta):
     """
-    Base class for ``ADLSecret`` loader.  Such class can be used for loading 
+    Base class for ``ADLSecret`` loader.  Such class can be used for loading
     ``ADLSecret`` from different kinds of sources: files, environment variables, etc.
     """
 
@@ -31,6 +31,7 @@ class ADLEnvSecretsLoader(ADLSecretsLoader):
     >>> secrets_loader = ADLEnvSecretsLoader().from_env("fs", "storage", "TEST_ENV_VAR")
     >>> secrets_loader.get_secret("fs", "storage")
     """
+
     def __init__(self):
         self._secrets_envs = defaultdict(dict)
 

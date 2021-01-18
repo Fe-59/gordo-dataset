@@ -110,7 +110,12 @@ def test_join_timeseries():
         timeseries_list, resampling_start, resampling_end, frequency
     )
     metadata_keys = sorted(metadata.keys())
-    assert ['aggregate_metadata', 'ts-hours', 'ts-minutes', 'ts-seconds'] == metadata_keys
+    assert [
+        "aggregate_metadata",
+        "ts-hours",
+        "ts-minutes",
+        "ts-seconds",
+    ] == metadata_keys
 
     # Check that first resulting resampled, joined row is within "frequency" from
     # the real first data point
@@ -160,7 +165,12 @@ def test_join_timeseries_nonutcstart():
         timeseries_list, resampling_start, resampling_end, frequency
     )
     metadata_keys = sorted(metadata.keys())
-    assert ['aggregate_metadata', 'ts-hours', 'ts-minutes', 'ts-seconds'] == metadata_keys
+    assert [
+        "aggregate_metadata",
+        "ts-hours",
+        "ts-minutes",
+        "ts-seconds",
+    ] == metadata_keys
     assert len(all_in_frame) == 481
 
 
@@ -184,7 +194,12 @@ def test_join_timeseries_with_gaps():
         timeseries_with_holes, resampling_start, resampling_end, frequency
     )
     metadata_keys = sorted(metadata.keys())
-    assert ['aggregate_metadata', 'ts-hours', 'ts-minutes', 'ts-seconds'] == metadata_keys
+    assert [
+        "aggregate_metadata",
+        "ts-hours",
+        "ts-minutes",
+        "ts-seconds",
+    ] == metadata_keys
     assert all_in_frame.index[0] == pd.Timestamp(latest_start)
     assert all_in_frame.index[-1] <= pd.Timestamp(resampling_end)
 
@@ -235,7 +250,12 @@ def test_join_timeseries_with_interpolation_method_linear_interpolation():
         interpolation_limit="8H",
     )
     metadata_keys = sorted(metadata.keys())
-    assert ['aggregate_metadata', 'ts-hours', 'ts-minutes', 'ts-seconds'] == metadata_keys
+    assert [
+        "aggregate_metadata",
+        "ts-hours",
+        "ts-minutes",
+        "ts-seconds",
+    ] == metadata_keys
     assert len(all_in_frame) == 337
 
 
@@ -253,7 +273,12 @@ def test_join_timeseries_with_interpolation_method_linear_interpolation_no_limit
         interpolation_limit=None,
     )
     metadata_keys = sorted(metadata.keys())
-    assert ['aggregate_metadata', 'ts-hours', 'ts-minutes', 'ts-seconds'] == metadata_keys
+    assert [
+        "aggregate_metadata",
+        "ts-hours",
+        "ts-minutes",
+        "ts-seconds",
+    ] == metadata_keys
     assert len(all_in_frame) == 4177
 
 
@@ -556,8 +581,13 @@ def test_trigger_tags(mock_tag_normalizer):
     data_provider = MockDataProvider()
     dataset = TimeSeriesDataset(
         data_provider=data_provider,
-        tag_list=[SensorTag("Tag 1", None), SensorTag("Tag 2", None),],
-        target_tag_list=[SensorTag("Tag 5", None),],
+        tag_list=[
+            SensorTag("Tag 1", None),
+            SensorTag("Tag 2", None),
+        ],
+        target_tag_list=[
+            SensorTag("Tag 5", None),
+        ],
         train_start_date=dateutil.parser.isoparse("2017-12-25 06:00:00Z"),
         train_end_date=dateutil.parser.isoparse("2017-12-29 06:00:00Z"),
         row_filter="`Tag 3` > 0 & `Tag 4` > 1",
@@ -578,12 +608,14 @@ def test_trigger_tags(mock_tag_normalizer):
 
 
 def test_get_dataset_with_full_import():
-    dataset = _get_dataset({
-        "type": "gordo_dataset.datasets.RandomDataset",
-        "train_start_date": "2017-12-25 06:00:00Z",
-        "train_end_date": "2017-12-29 06:00:00Z",
-        "tag_list": [SensorTag("Tag 1", None), SensorTag("Tag 2", None)]
-    })
+    dataset = _get_dataset(
+        {
+            "type": "gordo_dataset.datasets.RandomDataset",
+            "train_start_date": "2017-12-25 06:00:00Z",
+            "train_end_date": "2017-12-29 06:00:00Z",
+            "tag_list": [SensorTag("Tag 1", None), SensorTag("Tag 2", None)],
+        }
+    )
     assert type(dataset) is RandomDataset
 
 
@@ -591,13 +623,18 @@ def test_process_metadata(mock_tag_normalizer):
     data_provider = MockDataProvider()
     dataset = TimeSeriesDataset(
         data_provider=data_provider,
-        tag_list=[SensorTag("Tag 1", None), SensorTag("Tag 2", None),],
-        target_tag_list=[SensorTag("Tag 5", None),],
+        tag_list=[
+            SensorTag("Tag 1", None),
+            SensorTag("Tag 2", None),
+        ],
+        target_tag_list=[
+            SensorTag("Tag 5", None),
+        ],
         train_start_date=dateutil.parser.isoparse("2017-12-25 06:00:00Z"),
         train_end_date=dateutil.parser.isoparse("2017-12-29 06:00:00Z"),
         row_filter="`Tag 3` > 0 & `Tag 4` > 1",
         tag_normalizer=mock_tag_normalizer,
-        process_metadata=False
+        process_metadata=False,
     )
     dataset.get_data()
     assert dataset._metadata == {}

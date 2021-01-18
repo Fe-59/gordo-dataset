@@ -38,7 +38,9 @@ def test_create_from_env_interactive_browser_credential():
 
 
 def test_create_from_env_client_secret_credential():
-    adl_secret = ADLSecret("4d3eff2b-b62a-495e-ba51-9032bf46dba3", "client_id", "client_secret")
+    adl_secret = ADLSecret(
+        "4d3eff2b-b62a-495e-ba51-9032bf46dba3", "client_id", "client_secret"
+    )
     fs = ADLGen2FileSystem.create_from_env("dlaccount", "fs", adl_secret=adl_secret)
     assert isinstance(fs.file_system_client.credential, ClientSecretCredential)
     assert fs.account_name == "dlaccount"

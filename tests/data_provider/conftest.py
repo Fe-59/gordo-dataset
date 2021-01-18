@@ -12,6 +12,7 @@ from copy import copy
 from typing import Iterable, List, Optional
 import pandas as pd
 
+
 class DummyDataProvider(GordoBaseDataProvider):
     @capture_args
     def __init__(self, arg1) -> None:
@@ -39,7 +40,7 @@ class DummyDataProvider(GordoBaseDataProvider):
         if module_str is None or module_str == str.__class__.__module__:
             module_str = self.__class__.__name__
         else:
-            module_str = module_str + '.' + self.__class__.__name__
+            module_str = module_str + "." + self.__class__.__name__
         params["type"] = module_str
         return params
 
@@ -51,7 +52,7 @@ def mock_file_system():
     mock.split.side_effect = posixpath.split
     return mock
 
+
 @pytest.fixture
 def dummy_data_provider():
     return DummyDataProvider("test_arg")
-

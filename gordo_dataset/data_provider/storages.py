@@ -18,9 +18,11 @@ from gordo_dataset.data_provider.secrets_loaders import (
 
 DEFAULT_STORAGE_TYPE = "adl2"
 
-DEFAULT_SECRETS_LOADER: ADLSecretsLoader = ADLEnvSecretsLoader().from_env(
-    "adl1", "dataplatformdlsprod", "DL_SERVICE_AUTH_STR"
-).from_env("adl2", "omniadlseun", "DL2_SERVICE_AUTH_STR")
+DEFAULT_SECRETS_LOADER: ADLSecretsLoader = (
+    ADLEnvSecretsLoader()
+    .from_env("adl1", "dataplatformdlsprod", "DL_SERVICE_AUTH_STR")
+    .from_env("adl2", "omniadlseun", "DL2_SERVICE_AUTH_STR")
+)
 
 
 def create_storage(

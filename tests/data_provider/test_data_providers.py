@@ -86,8 +86,7 @@ class LoadMultipleDataFramesTest(unittest.TestCase):
         self.assertEqual(series_collection[0].name, "ab.*")
 
     def test_load_from_multiple_providers(self):
-        """ Two tags, each belonging to different data producers, and both gets loaded
-        """
+        """Two tags, each belonging to different data producers, and both gets loaded"""
         series_collection = list(
             load_series_from_multiple_providers(
                 [self.ab_producer, self.containing_b_producer],
@@ -137,14 +136,23 @@ def test_data_provider_serializations(
 def test_data_provider_deprecated_argument():
     with pytest.raises(ConfigException):
         provider = DataLakeProvider(
-            storage={"type": "adl2",}, store_name="test", interactive=True,
+            storage={
+                "type": "adl2",
+            },
+            store_name="test",
+            interactive=True,
         )
         provider._get_storage_instance()
 
 
 def test_dummy_data_provider_serialization(dummy_data_provider):
     encoded = dummy_data_provider.to_dict()
-    assert dummy_data_provider.__class__.__module__ + '.' + dummy_data_provider.__class__.__name__ == encoded['type']
+    assert (
+        dummy_data_provider.__class__.__module__
+        + "."
+        + dummy_data_provider.__class__.__name__
+        == encoded["type"]
+    )
 
     cloned = dummy_data_provider.from_dict(encoded)
     assert type(cloned) == type(dummy_data_provider)

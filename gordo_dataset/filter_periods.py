@@ -113,8 +113,7 @@ class FilterPeriods:
         )
 
     def _predict(self, data):
-        """Make predictions.
-        """
+        """Make predictions."""
         logger.info("Calculating predictions for isolation forest")
         assert isinstance(data, pd.DataFrame)
 

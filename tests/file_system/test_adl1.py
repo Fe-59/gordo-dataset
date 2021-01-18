@@ -29,7 +29,13 @@ def dirs_tree():
             },
             ["/path/to", "/path/out.json"],
         ),
-        "/path/to": ({"length": 0, "type": "DIRECTORY",}, ["/path/to/file.json"]),
+        "/path/to": (
+            {
+                "length": 0,
+                "type": "DIRECTORY",
+            },
+            ["/path/to/file.json"],
+        ),
         "/path/to/file.json": (
             {
                 "length": 142453,
