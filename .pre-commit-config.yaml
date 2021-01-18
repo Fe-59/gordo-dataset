@@ -1,0 +1,8 @@
+- repo: local
+  hooks:
+  - id: black
+    name: Black reformating
+    entry: poetry run black tests gordo_dataset
+    language: system
+    pass_filenames: false
+    types: [python]
