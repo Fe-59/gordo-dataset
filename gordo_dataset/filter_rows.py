@@ -223,7 +223,7 @@ def apply_buffer(mask: pd.Series, buffer_size: int = 0):
 def pandas_filter_rows(
     df: pd.DataFrame, filter_str: Union[str, list], buffer_size: int = 0
 ):
-    """ Filter pandas data frame based on list or string of conditions.
+    """Filter pandas data frame based on list or string of conditions.
 
     Note:
     pd.DataFrame.eval of a list returns a numpy.ndarray and is limited to 100 list items.
