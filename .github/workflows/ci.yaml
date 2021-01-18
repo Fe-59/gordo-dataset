@@ -44,6 +44,9 @@ jobs:
       - name: Check safety
         run: poetry run safety check --full-report
 
+      - name: Black
+        use: psf/black@19.10b0
+
       - name: Running tests
         run: poetry run pytest
 
