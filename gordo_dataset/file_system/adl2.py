@@ -203,9 +203,10 @@ class ADLGen2FileSystem(FileSystem):
     @staticmethod
     def _handle_attribute_error_bug(e: AttributeError):
         if e.__cause__ is not None and hasattr(e.__cause__, "response"):
+            response = getattr(e.__cause__, "response")
             logger.error(
                 "Handling azure.storage.filedatalake AttributeError bug. Response: %s",
-                str(e.__cause__.response),
+                response,
             )
         raise e
 
