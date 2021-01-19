@@ -31,6 +31,7 @@ class ADLEnvSecretsLoader(ADLSecretsLoader):
     >>> secrets_loader = ADLEnvSecretsLoader().from_env("fs", "storage", "TEST_ENV_VAR")
     >>> secrets_loader.get_secret("fs", "storage")
     """
+
     def __init__(self):
         self._secrets_envs = defaultdict(dict)
 

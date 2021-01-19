@@ -96,7 +96,9 @@ class NcsReader(GordoBaseDataProvider):
 
     def create_ncs_lookup(self, max_file_size: Optional[int]) -> NcsLookup:
         ncs_file_types = load_ncs_file_types(self.lookup_for)
-        return NcsLookup(self.storage, ncs_file_types, self.storage_name, max_file_size=max_file_size)
+        return NcsLookup(
+            self.storage, ncs_file_types, self.storage_name, max_file_size=max_file_size
+        )
 
     @property
     def reader_name(self) -> str:

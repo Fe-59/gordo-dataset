@@ -91,14 +91,15 @@ class GordoBaseDataProvider(object):
             config = copy(config)
             provider_type = config.pop("type")
         Provider = None
-        if '.' in provider_type:
+        if "." in provider_type:
             module_name, class_name = provider_type.rsplit(".", 1)
             # TODO validate module_name
             Provider = getattr(importlib.import_module(module_name), class_name)
         else:
             from gordo_dataset.data_provider import providers
+
             Provider = getattr(providers, provider_type)
-        
+
         if Provider is None:
             raise TypeError(f"No data provider of type '{config['type']}'")
         return Provider(**config)

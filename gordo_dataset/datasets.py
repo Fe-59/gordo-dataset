@@ -356,11 +356,15 @@ class TimeSeriesDataset(GordoBaseDataset):
                 outs = pd.cut(
                     X[tag],
                     bins=np.arange(
-                        round(X[tag].min() - step, 6), round(X[tag].max() + step, 6), step,
+                        round(X[tag].min() - step, 6),
+                        round(X[tag].max() + step, 6),
+                        step,
                     ),
                     retbins=False,
                 )
-                hists[str(tag)] = outs.value_counts().sort_index().to_json(orient="index")
+                hists[str(tag)] = (
+                    outs.value_counts().sort_index().to_json(orient="index")
+                )
             self._metadata["x_hist"] = hists
 
         return X, y

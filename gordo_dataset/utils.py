@@ -212,9 +212,7 @@ def join_timeseries(
             missing_data_series.append(series.name)
         else:
             resampled_series.append(resampled)
-            metadata[series.name].update(
-                dict(resampled_length=len(resampled))
-            )
+            metadata[series.name].update(dict(resampled_length=len(resampled)))
     if missing_data_series:
         raise InsufficientDataError(
             f"The following features are missing data: {missing_data_series}"
@@ -253,13 +251,9 @@ def _resample(
         # Insert a NaN at the startpoint, to make sure that all resampled
         # indexes are the same. This approach will "pad" most frames with
         # NaNs, that will be removed at the end.
-        startpoint = pd.Series(
-            [np.NaN], index=[startpoint_sametz], name=series.name
-        )
+        startpoint = pd.Series([np.NaN], index=[startpoint_sametz], name=series.name)
         series = startpoint.append(series)
-        logging.debug(
-            f"Appending NaN to {series.name} " f"at time {startpoint_sametz}"
-        )
+        logging.debug(f"Appending NaN to {series.name} " f"at time {startpoint_sametz}")
 
     elif series.index[0] < resampling_startpoint:
         msg = (
@@ -273,9 +267,7 @@ def _resample(
     if series.index[-1] < endpoint_sametz:
         endpoint = pd.Series([np.NaN], index=[endpoint_sametz], name=series.name)
         series = series.append(endpoint)
-        logging.debug(
-            f"Appending NaN to {series.name} " f"at time {endpoint_sametz}"
-        )
+        logging.debug(f"Appending NaN to {series.name} " f"at time {endpoint_sametz}")
     elif series.index[-1] > endpoint_sametz:
         msg = (
             f"Error - for {series.name}, last timestamp "
@@ -314,9 +306,7 @@ def _resample(
         )
 
         if limit <= 0:
-            raise ValueError(
-                "Interpolation limit must be larger than given resolution"
-            )
+            raise ValueError("Interpolation limit must be larger than given resolution")
     else:
         limit = None
 

@@ -28,7 +28,10 @@ class GordoBaseDataset(metaclass=ABCMeta):
     @abstractmethod
     def get_data(
         self,
-    ) -> Tuple[Union[np.ndarray, pd.DataFrame, xr.DataArray], Union[np.ndarray, pd.DataFrame, xr.DataArray]]:
+    ) -> Tuple[
+        Union[np.ndarray, pd.DataFrame, xr.DataArray],
+        Union[np.ndarray, pd.DataFrame, xr.DataArray],
+    ]:
         """
         Return X, y data as numpy or pandas' dataframes given current state
         """
@@ -50,7 +53,7 @@ class GordoBaseDataset(metaclass=ABCMeta):
         # Update dict with the class
         params = self._params
         params_type = ""
-        if hasattr(self, '__module__'):
+        if hasattr(self, "__module__"):
             params_type = self.__module__ + "."
         params_type += self.__class__.__name__
         params["type"] = params_type
@@ -71,4 +74,3 @@ class GordoBaseDataset(metaclass=ABCMeta):
         Get metadata about the current state of the dataset
         """
         return dict()
-
