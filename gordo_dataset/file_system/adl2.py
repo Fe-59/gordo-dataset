@@ -200,20 +200,40 @@ class ADLGen2FileSystem(FileSystem):
         # TODO taking into account attribute path_properties.last_modified. Example: 'Mon, 07 Sep 2020 12:01:14 GMT'
         return FileInfo(file_type, size)
 
+    @staticmethod
+    def _handle_attribute_error_bug(e: AttributeError):
+        if e.__cause__ is not None and hasattr(e.__cause__, "response"):
+            response = getattr(e.__cause__, "response")
+            logger.error(
+                "Handling azure.storage.filedatalake AttributeError bug. Response: %s",
+                response,
+            )
+        raise e
+
     def ls(
         self, path: str, with_info: bool = True
     ) -> Iterable[Tuple[str, Optional[FileInfo]]]:
         dir_iterator = self.file_system_client.get_paths(path, recursive=False)
 
-        for properties in dir_iterator:
-            file_info = self.path_properties_to_info(properties) if with_info else None
-            yield properties.name, file_info
+        try:
+            for properties in dir_iterator:
+                file_info = (
+                    self.path_properties_to_info(properties) if with_info else None
+                )
+                yield properties.name, file_info
+        except AttributeError as e:
+            self._handle_attribute_error_bug(e)
 
     def walk(
         self, base_path: str, with_info: bool = True
     ) -> Iterable[Tuple[str, Optional[FileInfo]]]:
         dir_iterator = self.file_system_client.get_paths(base_path)
 
-        for properties in dir_iterator:
-            file_info = self.path_properties_to_info(properties) if with_info else None
-            yield properties.name, file_info
+        try:
+            for properties in dir_iterator:
+                file_info = (
+                    self.path_properties_to_info(properties) if with_info else None
+                )
+                yield properties.name, file_info
+        except AttributeError as e:
+            self._handle_attribute_error_bug(e)
