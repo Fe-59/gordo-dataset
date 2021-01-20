@@ -130,15 +130,30 @@ def mock_file_system(dir_tree):
 def test_mock_file_system(mock_file_system):
     result = list(mock_file_system.ls("path"))
     assert result == [
-        ("path/%C3%81sgar%C3%B0r", FileInfo(file_type=FileType.DIRECTORY, size=0),),
-        ("path/tag2", FileInfo(file_type=FileType.DIRECTORY, size=0),),
-        ("path/tag3", FileInfo(file_type=FileType.DIRECTORY, size=0),),
+        (
+            "path/%C3%81sgar%C3%B0r",
+            FileInfo(file_type=FileType.DIRECTORY, size=0),
+        ),
+        (
+            "path/tag2",
+            FileInfo(file_type=FileType.DIRECTORY, size=0),
+        ),
+        (
+            "path/tag3",
+            FileInfo(file_type=FileType.DIRECTORY, size=0),
+        ),
     ]
     result = list(mock_file_system.walk("path/tag2"))
     print(result)
     assert result == [
-        ("path/tag2", FileInfo(file_type=FileType.DIRECTORY, size=0),),
-        ("path/tag2/parquet", FileInfo(file_type=FileType.DIRECTORY, size=0),),
+        (
+            "path/tag2",
+            FileInfo(file_type=FileType.DIRECTORY, size=0),
+        ),
+        (
+            "path/tag2/parquet",
+            FileInfo(file_type=FileType.DIRECTORY, size=0),
+        ),
         (
             "path/tag2/parquet/tag2_2020.parquet",
             FileInfo(file_type=FileType.FILE, size=1000),
@@ -321,7 +336,8 @@ def test_assets_config_tags_lookup_exceptions(
 
 
 @pytest.mark.parametrize(
-    "threads_count", [1, 2, 10],
+    "threads_count",
+    [1, 2, 10],
 )
 def test_lookup_default(
     default_ncs_lookup: NcsLookup, mock_assets_config, threads_count
@@ -349,7 +365,8 @@ def test_lookup_default(
 
 
 @pytest.mark.parametrize(
-    "threads_count", [None, 0],
+    "threads_count",
+    [None, 0],
 )
 def test_lookup_exceptions(
     default_ncs_lookup: NcsLookup, mock_assets_config, threads_count

@@ -136,7 +136,11 @@ def test_data_provider_serializations(
 def test_data_provider_deprecated_argument():
     with pytest.raises(ConfigException):
         provider = DataLakeProvider(
-            storage={"type": "adl2",}, store_name="test", interactive=True,
+            storage={
+                "type": "adl2",
+            },
+            store_name="test",
+            interactive=True,
         )
         provider._get_storage_instance()
 

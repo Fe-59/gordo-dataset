@@ -244,7 +244,10 @@ class NcsReader(GordoBaseDataProvider):
         fs.info(path)
 
     def read_tag_files(
-        self, tag: SensorTag, years: range, dry_run: Optional[bool] = False,
+        self,
+        tag: SensorTag,
+        years: range,
+        dry_run: Optional[bool] = False,
     ) -> pd.Series:
         """
         Download tag files for the given years into dataframes,
