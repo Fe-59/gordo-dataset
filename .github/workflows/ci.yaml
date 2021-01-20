@@ -47,8 +47,8 @@ jobs:
       - name: Running tests
         run: poetry run pytest
 
-      - name: Black
-        uses: psf/black@20.8b0
+#      - name: Black
+#        uses: psf/black@20.8b0
 
       - name: Save Coverage
         run: |

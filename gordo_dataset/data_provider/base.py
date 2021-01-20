@@ -10,6 +10,7 @@ from typing import Iterable, List, Optional
 import pandas as pd
 
 from gordo_dataset.sensor_tag import SensorTag
+from gordo_dataset.exceptions import ConfigException
 
 
 class GordoBaseDataProvider(object):
@@ -90,16 +91,29 @@ class GordoBaseDataProvider(object):
         if "type" in config:
             config = copy(config)
             provider_type = config.pop("type")
-        Provider = None
+
+        module = None
         if "." in provider_type:
             module_name, class_name = provider_type.rsplit(".", 1)
+
             # TODO validate module_name
-            Provider = getattr(importlib.import_module(module_name), class_name)
+            try:
+                module = importlib.import_module(module_name)
+            except ImportError as e:
+                raise ConfigException(
+                    f"Unable to import module '{module_name}': {str(e)}"
+                )
         else:
             from gordo_dataset.data_provider import providers
 
-            Provider = getattr(providers, provider_type)
+            module_name, class_name = "gordo_dataset.data_provider", provider_type
+            module = providers
 
-        if Provider is None:
-            raise TypeError(f"No data provider of type '{config['type']}'")
+        try:
+            Provider = getattr(module, class_name)
+        except AttributeError:
+            raise ConfigException(
+                f"Unable to find data provider '{class_name}' in module {module_name}"
+            )
+
         return Provider(**config)
