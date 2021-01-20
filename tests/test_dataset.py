@@ -581,13 +581,8 @@ def test_trigger_tags(mock_tag_normalizer):
     data_provider = MockDataProvider()
     dataset = TimeSeriesDataset(
         data_provider=data_provider,
-        tag_list=[
-            SensorTag("Tag 1", None),
-            SensorTag("Tag 2", None),
-        ],
-        target_tag_list=[
-            SensorTag("Tag 5", None),
-        ],
+        tag_list=[SensorTag("Tag 1", None), SensorTag("Tag 2", None),],
+        target_tag_list=[SensorTag("Tag 5", None),],
         train_start_date=dateutil.parser.isoparse("2017-12-25 06:00:00Z"),
         train_end_date=dateutil.parser.isoparse("2017-12-29 06:00:00Z"),
         row_filter="`Tag 3` > 0 & `Tag 4` > 1",
@@ -623,13 +618,8 @@ def test_process_metadata(mock_tag_normalizer):
     data_provider = MockDataProvider()
     dataset = TimeSeriesDataset(
         data_provider=data_provider,
-        tag_list=[
-            SensorTag("Tag 1", None),
-            SensorTag("Tag 2", None),
-        ],
-        target_tag_list=[
-            SensorTag("Tag 5", None),
-        ],
+        tag_list=[SensorTag("Tag 1", None), SensorTag("Tag 2", None),],
+        target_tag_list=[SensorTag("Tag 5", None),],
         train_start_date=dateutil.parser.isoparse("2017-12-25 06:00:00Z"),
         train_end_date=dateutil.parser.isoparse("2017-12-29 06:00:00Z"),
         row_filter="`Tag 3` > 0 & `Tag 4` > 1",
