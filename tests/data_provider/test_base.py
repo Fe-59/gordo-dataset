@@ -1,7 +1,11 @@
 import pytest
 
 from gordo_dataset.data_provider.base import GordoBaseDataProvider
-from gordo_dataset.data_provider.providers import DataLakeProvider, InfluxDataProvider
+from gordo_dataset.data_provider.providers import (
+    DataLakeProvider,
+    InfluxDataProvider,
+    RandomDataProvider,
+)
 from gordo_dataset.exceptions import ConfigException
 
 
@@ -38,3 +42,19 @@ def test_from_dict_errors(wrong_type):
     with pytest.raises(ConfigException):
         config = {"type": wrong_type}
         GordoBaseDataProvider.from_dict(config)
+
+
+def test_to_dict_built_in():
+    data_provider = RandomDataProvider()
+    config = data_provider.to_dict()
+    assert config["type"] == "RandomDataProvider"
+
+
+class CustomRandomDataProvider(RandomDataProvider):
+    pass
+
+
+def test_to_dict_custom():
+    data_provider = CustomRandomDataProvider()
+    config = data_provider.to_dict()
+    assert config["type"] == "tests.data_provider.test_base.CustomRandomDataProvider"
