@@ -56,7 +56,7 @@ class GordoBaseDataset(metaclass=ABCMeta):
         if hasattr(self, "__module__"):
             from gordo_dataset.data_provider import providers
 
-            # Keep back-comparability
+            # Keep back-compatibility
             if self.__module__ is not providers:
                 params_type = self.__module__ + "."
         params_type += self.__class__.__name__
