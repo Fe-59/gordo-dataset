@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import List, Iterable, Optional
+from typing import List, Iterable, Optional, Tuple, Union
 
 import pytest
 import numpy as np
@@ -8,6 +8,8 @@ import pandas as pd
 import dateutil.parser
 from datetime import datetime
 from unittest.mock import Mock
+
+import xarray as xr
 
 from gordo_dataset.data_provider.base import GordoBaseDataProvider
 from gordo_dataset.datasets import (
@@ -19,6 +21,7 @@ from gordo_dataset.exceptions import InsufficientDataError
 from gordo_dataset.sensor_tag import SensorTag
 from gordo_dataset.utils import join_timeseries
 from gordo_dataset.dataset import _get_dataset
+from gordo_dataset.utils import capture_args
 
 
 @pytest.fixture
@@ -638,3 +641,33 @@ def test_process_metadata(mock_tag_normalizer):
     )
     dataset.get_data()
     assert dataset._metadata == {}
+
+
+class DatasetForTest(GordoBaseDataset):
+    @capture_args
+    def __init__(self):
+        super(DatasetForTest, self).__init__()
+
+    def get_data(
+        self,
+    ) -> Tuple[
+        Union[np.ndarray, pd.DataFrame, xr.DataArray],
+        Union[np.ndarray, pd.DataFrame, xr.DataArray],
+    ]:
+        return np.array([]), np.array([])
+
+
+def test_legacy_to_dict():
+    dataset = RandomDataset(
+        "2017-12-25 06:00:00Z",
+        "2017-12-29 06:00:00Z",
+        [SensorTag("Tag 1", None), SensorTag("Tag 2", None)],
+    )
+    config = dataset.to_dict()
+    assert config["type"] == "RandomDataset"
+
+
+def test_to_dict_for_test_dataset():
+    dataset = DatasetForTest()
+    config = dataset.to_dict()
+    assert config["type"] == "tests.test_dataset.DatasetForTest"

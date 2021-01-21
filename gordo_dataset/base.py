@@ -54,11 +54,12 @@ class GordoBaseDataset(metaclass=ABCMeta):
         params = self._params
         params_type = ""
         if hasattr(self, "__module__"):
-            from gordo_dataset.data_provider import providers
-
             # Keep back-compatibility
-            if self.__module__ is not providers:
+            print(self.__module__)
+            if self.__module__ != "gordo_dataset.datasets":
                 params_type = self.__module__ + "."
+        else:
+            print("Not found __module__")
         params_type += self.__class__.__name__
         params["type"] = params_type
         for key, value in params.items():
