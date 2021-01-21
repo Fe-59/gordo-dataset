@@ -43,7 +43,7 @@ def test_from_dict_with_empty_type():
     assert dataset.tag_list == tag_list
 
 
-def test_to_dict():
+def test_to_dict_build_in():
     train_start_date = datetime(2020, 1, 1, tzinfo=tzutc())
     train_end_date = datetime(2020, 3, 1, tzinfo=tzutc())
     tag_list = [SensorTag("tag1", "asset"), SensorTag("tag2", "asset")]
@@ -57,4 +57,4 @@ def test_to_dict():
     assert config["train_start_date"] == "2020-01-01T00:00:00+00:00"
     assert config["train_end_date"] == "2020-03-01T00:00:00+00:00"
     assert config["tag_list"] == tag_list
-    assert config["type"] == "gordo_dataset.datasets.TimeSeriesDataset"
+    assert config["type"] == "TimeSeriesDataset"

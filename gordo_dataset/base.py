@@ -55,7 +55,6 @@ class GordoBaseDataset(metaclass=ABCMeta):
         params_type = ""
         if hasattr(self, "__module__"):
             # Keep back-compatibility
-            print(self.__module__)
             if self.__module__ != "gordo_dataset.datasets":
                 params_type = self.__module__ + "."
         else:
