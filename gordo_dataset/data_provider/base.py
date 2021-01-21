@@ -81,7 +81,13 @@ class GordoBaseDataProvider(object):
             )
         # Update dict with the class
         params = self._params
-        params["type"] = self.__class__.__name__
+        params_type = ""
+        if hasattr(self, "__module__"):
+            # Keep back-compatibility
+            if self.__module__ != "gordo_dataset.data_provider.providers":
+                params_type = self.__module__ + "."
+        params_type += self.__class__.__name__
+        params["type"] = params_type
         return params
 
     @classmethod
