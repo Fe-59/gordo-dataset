@@ -154,14 +154,17 @@ class ADLGen2FileSystem(FileSystem):
         for m in mode:
             if m not in "rb":
                 raise ValueError("Unsupported file open mode '%s'" % m)
-        info = self.info(path)
-        max_concurrency = self.get_max_concurrency(
-            info.size, self.thread_chunk_size, self.max_threads_count
-        )
         wrap_as_text = "b" not in mode
-        file_client = self.file_system_client.get_file_client(path)
-        downloader = file_client.download_file(max_concurrency=max_concurrency)
-        stream = BytesIO(downloader.readall())
+        info = self.info(path)
+        if info.size:
+            max_concurrency = self.get_max_concurrency(
+                info.size, self.thread_chunk_size, self.max_threads_count
+            )
+            file_client = self.file_system_client.get_file_client(path)
+            downloader = file_client.download_file(max_concurrency=max_concurrency)
+            stream = BytesIO(downloader.readall())
+        else:
+            stream = BytesIO(b"")
         fd = cast(IO, TextIOWrapper(stream) if wrap_as_text else stream)
         return fd
 

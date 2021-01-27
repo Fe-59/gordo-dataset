@@ -80,6 +80,18 @@ def test_open(downloader_mock, fs_client_mock, file_client_mock):
     cast(Mock, fs.get_max_concurrency).assert_called_with(10000, 1000, 3)
 
 
+def test_empty_open(fs_client_mock, file_client_mock):
+    fs = ADLGen2FileSystem(fs_client_mock, "dlaccount", "fs")
+    fs.get_max_concurrency = Mock(return_value=3)
+    fs.info = Mock(return_value=FileInfo(FileType.FILE, 0))
+    with fs.open("/path/to/file", "rb") as f:
+        assert f.read() == b""
+    cast(Mock, fs.info).assert_called_with("/path/to/file")
+    fs_client_mock.get_file_client.assert_not_called()
+    file_client_mock.download_file.assert_not_called()
+    cast(Mock, fs.get_max_concurrency).assert_not_called()
+
+
 def test_not_exists(fs_client_mock, file_client_mock):
     file_client_mock.get_file_properties.side_effect = ResourceNotFoundError
     fs = ADLGen2FileSystem(fs_client_mock, "dlaccount", "fs")
