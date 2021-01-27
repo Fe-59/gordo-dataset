@@ -1,8 +1,9 @@
 import pytest
-from mock import patch, MagicMock
+from mock import Mock, MagicMock
 
 from azure.core.exceptions import ResourceNotFoundError
 from datetime import datetime
+from typing import cast
 
 from azure.storage.filedatalake import PathProperties
 from gordo_dataset.file_system.adl2 import ADLGen2FileSystem
@@ -30,6 +31,24 @@ def fs_client_mock(file_client_mock):
     return fs_client_mock
 
 
+@pytest.mark.parametrize(
+    "file_size,thread_chunk_size,max_threads_count,result",
+    (
+        (100, 10000, 3, 1),
+        (15000, 10000, 3, 2),
+        (40000, 10000, 3, 3),
+        (50000, 0, 30, 30),
+    ),
+)
+def test_get_max_concurrency(file_size, thread_chunk_size, max_threads_count, result):
+    assert (
+        ADLGen2FileSystem.get_max_concurrency(
+            file_size, thread_chunk_size, max_threads_count
+        )
+        == result
+    )
+
+
 def test_create_from_env_interactive_browser_credential():
     fs = ADLGen2FileSystem.create_from_env("dlaccount", "fs", interactive=True)
     assert isinstance(fs.file_system_client.credential, InteractiveBrowserCredential)
@@ -47,12 +66,18 @@ def test_create_from_env_client_secret_credential():
     assert fs.file_system_name == "fs"
 
 
-def test_open(downloader_mock, fs_client_mock):
+def test_open(downloader_mock, fs_client_mock, file_client_mock):
     downloader_mock.readall.return_value = b"\x7fELF\x02"
-    fs = ADLGen2FileSystem(fs_client_mock, "dlaccount", "fs")
+    fs = ADLGen2FileSystem(
+        fs_client_mock, "dlaccount", "fs", thread_chunk_size=1000, max_threads_count=3
+    )
+    fs.get_max_concurrency = Mock(return_value=3)
+    fs.info = Mock(return_value=FileInfo(FileType.FILE, 10000))
     with fs.open("/path/to/file", "rb") as f:
         assert f.read() == b"\x7fELF\x02"
-    fs_client_mock.get_file_client.assert_called_once_with("/path/to/file")
+    fs_client_mock.get_file_client.assert_called_with("/path/to/file")
+    file_client_mock.download_file.assert_called_with(max_concurrency=3)
+    cast(Mock, fs.get_max_concurrency).assert_called_with(10000, 1000, 3)
 
 
 def test_not_exists(fs_client_mock, file_client_mock):

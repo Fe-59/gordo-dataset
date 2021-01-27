@@ -1,5 +1,6 @@
 import logging
 import threading
+import math
 
 from azure.core.exceptions import ResourceNotFoundError
 from azure.core.pipeline.transport import RequestsTransport
@@ -126,12 +127,24 @@ class ADLGen2FileSystem(FileSystem):
         file_system_client: FileSystemClient,
         account_name: str,
         file_system_name: str,
-        max_concurrency: int = 1,
+        thread_chunk_size: int = 50 * (10 ** 6),  # 50 Mb
+        max_threads_count: int = 20,
     ):
         self.file_system_client = file_system_client
         self.account_name = account_name
         self.file_system_name = file_system_name
-        self.max_concurrency = max_concurrency
+        self.thread_chunk_size = thread_chunk_size
+        self.max_threads_count = max_threads_count
+
+    @staticmethod
+    def get_max_concurrency(
+        file_size: int, thread_chunk_size: int, max_threads_count: int
+    ) -> int:
+        if thread_chunk_size:
+            threads_count = math.ceil(file_size / thread_chunk_size)
+            return min(threads_count, max_threads_count)
+        else:
+            return max_threads_count
 
     @property
     def name(self):
@@ -141,9 +154,13 @@ class ADLGen2FileSystem(FileSystem):
         for m in mode:
             if m not in "rb":
                 raise ValueError("Unsupported file open mode '%s'" % m)
+        info = self.info(path)
+        max_concurrency = self.get_max_concurrency(
+            info.size, self.thread_chunk_size, self.max_threads_count
+        )
         wrap_as_text = "b" not in mode
         file_client = self.file_system_client.get_file_client(path)
-        downloader = file_client.download_file(max_concurrency=self.max_concurrency)
+        downloader = file_client.download_file(max_concurrency=max_concurrency)
         stream = BytesIO(downloader.readall())
         fd = cast(IO, TextIOWrapper(stream) if wrap_as_text else stream)
         return fd
