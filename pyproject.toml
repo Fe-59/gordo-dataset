@@ -38,7 +38,7 @@ PyYAML = "^5.3.1"
 scikit-learn = "^0.23.2"
 numexpr = "^2.7.1"
 xarray = "^0.16.2"
-cryptography = "^3.4.0"
+cryptography = "3.3.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.1"
