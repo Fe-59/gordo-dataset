@@ -72,7 +72,7 @@ class NcsLookup:
         max_file_size: Optional[int] = DEFAULT_MAX_FILE_SIZE,
     ) -> "NcsLookup":
         ncs_file_types = load_ncs_file_types(ncs_type_names)
-        return cls(storage, ncs_file_types, storage_name)
+        return cls(storage, ncs_file_types, storage_name, max_file_size=max_file_size)
 
     def __init__(
         self,
