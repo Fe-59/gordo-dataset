@@ -58,8 +58,8 @@ def test_exact_time_period_validation_error():
 
 
 def test_time_period_eq():
-    a = ExactTimePeriod(datetime(2020, 3, 20, 0, 0), datetime(2020, 3, 20, 0, 0))
-    b = ExactTimePeriod(datetime(2020, 3, 20, 0, 0), datetime(2020, 3, 20, 0, 0))
+    a = ExactTimePeriod(datetime(2020, 3, 20, 0, 0), datetime(2020, 3, 25, 0, 0))
+    b = ExactTimePeriod(datetime(2020, 3, 20, 0, 0), datetime(2020, 3, 25, 0, 0))
     assert a == b
     with pytest.raises(ValueError):
         assert a == "str"
