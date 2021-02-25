@@ -57,6 +57,14 @@ def test_exact_time_period_validation_error():
         ExactTimePeriod(datetime(2020, 5, 20, 0, 0), datetime(2020, 3, 20, 0, 0))
 
 
+def test_time_period_eq():
+    a = ExactTimePeriod(datetime(2020, 3, 20, 0, 0), datetime(2020, 3, 20, 0, 0))
+    b = ExactTimePeriod(datetime(2020, 3, 20, 0, 0), datetime(2020, 3, 20, 0, 0))
+    assert a == b
+    with pytest.raises(ValueError):
+        assert a == "str"
+
+
 def test_split_by_year_span_different_years():
     time_period = ExactTimePeriod(
         datetime(2018, 3, 20, 0, 0), datetime(2021, 3, 20, 0, 0)
