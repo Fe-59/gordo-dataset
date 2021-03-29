@@ -11,8 +11,9 @@ from .ncs_contants import NCS_READER_NAME
 from .ncs_file_type import NcsFileType, load_ncs_file_types
 from .assets_config import AssetsConfig, PathSpec
 from .constants import DEFAULT_MAX_FILE_SIZE
+from .partition import Partition, YearPartition
 
-from typing import List, Iterable, Tuple, Optional, Dict, Iterator
+from typing import List, Iterable, Tuple, Optional, Dict, Iterator, Union, Any
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 
@@ -27,35 +28,38 @@ class Location:
 
     path: str
     file_type: FileType
+    partition: Partition
 
 
 @dataclass(frozen=True)
 class TagLocations:
     """
-    Locations of the tags for each year
+    Locations of the tags for each partition
     """
 
     tag: SensorTag
-    locations: Optional[Dict[int, Location]] = None
+    locations: Optional[Dict[Partition, Location]] = None
 
     def available(self) -> bool:
         return self.locations is not None
 
-    def years(self) -> List[int]:
+    def partitions(self) -> List[Partition]:
         if self.locations is None:
             return []
         return sorted(self.locations.keys())
 
-    def get_location(self, year: int) -> Optional[Location]:
+    def get_location(self, partition: Union[int, Partition]) -> Optional[Location]:
+        if type(partition) is int:
+            partition = YearPartition(partition)
         if self.locations is None:
             return None
-        return self.locations.get(year)
+        return self.locations.get(partition)
 
     def __iter__(self) -> Iterator[Tuple[SensorTag, int, Location]]:
         if self.locations is not None:
             locations = self.locations
-            for year in self.years():
-                yield self.tag, year, locations[year]
+            for partition in self.partitions():
+                yield self.tag, partition, locations[partition]
 
 
 class NcsLookup:
@@ -135,7 +139,7 @@ class NcsLookup:
         return True
 
     def files_lookup(
-        self, tag_dir: str, tag: SensorTag, years: Iterable[int]
+        self, tag_dir: str, tag: SensorTag, partitions: Iterable[Partition]
     ) -> TagLocations:
         """
         Finds files (possible parquet or CSV) in tag directory in the data lake storage
@@ -144,8 +148,8 @@ class NcsLookup:
         ----------
         tag_dir: str
         tag: SensorTag
-        years: Iterable[int]
-            List of the years for finding files
+        partitions: Iterable[Partition]
+            List of partitions for finding files
 
         Returns
         -------
@@ -156,18 +160,23 @@ class NcsLookup:
         ncs_file_types = self.ncs_file_types
         tag_name = self.quote_tag_name(tag.name)
         locations = {}
-        for year in years:
+        for partition in partitions:
             found = False
             for ncs_file_type in ncs_file_types:
-                for path in ncs_file_type.paths(storage, tag_name, year):
-                    full_path = storage.join(tag_dir, path)
-                    if storage.exists(full_path) and self._validate_file(full_path):
-                        file_type = ncs_file_type.file_type
-                        locations[year] = Location(full_path, file_type)
-                        found = True
+                if ncs_file_type.check_partition(partition):
+                    for path_partition, path in ncs_file_type.paths(
+                        storage, tag_name, [partition]
+                    ):
+                        full_path = storage.join(tag_dir, path)
+                        if storage.exists(full_path) and self._validate_file(full_path):
+                            file_type = ncs_file_type.file_type
+                            locations[partition] = Location(
+                                full_path, file_type, path_partition
+                            )
+                            found = True
+                            break
+                    if found:
                         break
-                if found:
-                    break
         return TagLocations(tag, locations if locations else None)
 
     def assets_config_tags_lookup(
@@ -224,24 +233,26 @@ class NcsLookup:
                 yield tag, tag_dir
 
     def _thread_pool_lookup_mapper(
-        self, tag_dirs: Tuple[SensorTag, Optional[str]], years: List[int]
+        self, tag_dirs: Tuple[SensorTag, Optional[str]], partitions: List[Partition]
     ) -> TagLocations:
         tag, tag_dir = tag_dirs
         if tag_dir is not None:
-            return self.files_lookup(tag_dir, tag, years)
+            return self.files_lookup(tag_dir, tag, partitions)
         else:
             return TagLocations(tag, None)
 
     @staticmethod
-    def _years_inf_iterator(years: Iterable[int]) -> Iterable[Iterable[int]]:
+    def _partitions_inf_iterator(
+        partitions: Iterable[Partition],
+    ) -> Iterable[Iterable[int]]:
         while True:
-            yield years
+            yield partitions
 
     def lookup(
         self,
         asset_config: AssetsConfig,
         tags: List[SensorTag],
-        years: Iterable[int],
+        partitions: Iterable[Partition],
         threads_count: int = 1,
         base_dir: Optional[str] = None,
     ) -> Iterable[TagLocations]:
@@ -252,7 +263,7 @@ class NcsLookup:
         ----------
         asset_config: AssetsConfig
         tags: List[SensorTag]
-        years: Iterable[int]
+        partitions: Iterable[Partition]
         threads_count: int
             Number of threads for internal `ThreadPool`. Do not uses thread pool if 1
         base_dir: Optional[str]
@@ -265,19 +276,19 @@ class NcsLookup:
             raise ConfigException("thread_count should bigger or equal to 1")
         multi_thread = threads_count > 1
         tag_dirs = self.assets_config_tags_lookup(asset_config, tags, base_dir=base_dir)
-        years_tuple = tuple(years)
+        partitions_tuple = tuple(partitions)
         if multi_thread:
             with ThreadPoolExecutor(max_workers=threads_count) as executor:
                 result = executor.map(
                     self._thread_pool_lookup_mapper,
                     tag_dirs,
-                    self._years_inf_iterator(years_tuple),
+                    self._partitions_inf_iterator(partitions_tuple),
                 )
                 for tag_locations in result:
                     yield tag_locations
         else:
             for tag, tag_dir in tag_dirs:
                 if tag_dir is not None:
-                    yield self.files_lookup(tag_dir, tag, years_tuple)
+                    yield self.files_lookup(tag_dir, tag, partitions_tuple)
                 else:
                     yield TagLocations(tag, None)
