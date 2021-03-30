@@ -8,11 +8,23 @@ from datetime import datetime
 class YearPartition:
     year: int
 
+    def __lt__(self, other):
+        if not isinstance(other, YearPartition):
+            raise NotImplemented()
+        return self.year < other.year
+
 
 @dataclass(frozen=True)
 class MonthPartition:
     year: int
     month: int
+
+    def __lt__(self, other):
+        if not isinstance(other, MonthPartition):
+            raise NotImplemented()
+        if self.year == other.year:
+            return self.month < other.month
+        return self.year < other.year
 
 
 Partition = Union[YearPartition, MonthPartition]

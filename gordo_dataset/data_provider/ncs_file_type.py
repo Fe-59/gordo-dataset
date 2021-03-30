@@ -2,9 +2,9 @@ from abc import ABCMeta, abstractmethod
 
 from gordo_dataset.file_system import FileSystem
 from .file_type import FileType, ParquetFileType, CsvFileType, TimeSeriesColumns
-from .partition import Partition, YearPartition, MonthPartition, PartitionBy
+from .partition import Partition, YearPartition, MonthPartition
 
-from typing import Iterable, Optional, List, Tuple, Type
+from typing import Iterable, Optional, List, Tuple, Type, Dict, cast
 
 from ..exceptions import ConfigException
 
@@ -27,7 +27,7 @@ class NcsFileType(metaclass=ABCMeta):
         ...
 
     def check_partition(self, partition: Partition):
-        return not isinstance(partition, self.partition_type)
+        return isinstance(partition, self.partition_type)
 
     @abstractmethod
     def paths(
@@ -74,6 +74,7 @@ class NcsMonthlyParquetFileType(NcsFileType):
         for partition in partitions:
             if not self.check_partition(partition):
                 raise NotImplemented()
+            partition = cast(MonthPartition, partition)
             file_name = (
                 f"{tag_name}_{partition.year}{partition.month:02d}{file_extension}"
             )
@@ -105,6 +106,7 @@ class NcsYearlyParquetFileType(NcsFileType):
         for partition in partitions:
             if not self.check_partition(partition):
                 raise NotImplemented()
+            partition = cast(YearPartition, partition)
             path = fs.join("parquet", f"{tag_name}_{partition.year}{file_extension}")
             yield partition, path
 
@@ -138,7 +140,7 @@ class NcsCsvFileType(NcsFileType):
             yield partition, path
 
 
-ncs_file_types = {
+ncs_file_types: Dict[str, Type[NcsFileType]] = {
     "parquet": NcsMonthlyParquetFileType,
     "yearly_parquet": NcsYearlyParquetFileType,
     "csv": NcsCsvFileType,

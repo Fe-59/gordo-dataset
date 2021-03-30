@@ -13,7 +13,7 @@ from .assets_config import AssetsConfig, PathSpec
 from .constants import DEFAULT_MAX_FILE_SIZE
 from .partition import Partition, YearPartition
 
-from typing import List, Iterable, Tuple, Optional, Dict, Iterator, Union, Any
+from typing import List, Iterable, Tuple, Optional, Dict, Iterator, Union, cast
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 
@@ -28,7 +28,7 @@ class Location:
 
     path: str
     file_type: FileType
-    partition: Partition
+    partition: Optional[Partition] = None
 
 
 @dataclass(frozen=True)
@@ -49,13 +49,14 @@ class TagLocations:
         return sorted(self.locations.keys())
 
     def get_location(self, partition: Union[int, Partition]) -> Optional[Location]:
+        curr_partition: Partition = cast(Partition, partition)
         if type(partition) is int:
-            partition = YearPartition(partition)
+            curr_partition = YearPartition(cast(int, partition))
         if self.locations is None:
             return None
-        return self.locations.get(partition)
+        return self.locations.get(curr_partition)
 
-    def __iter__(self) -> Iterator[Tuple[SensorTag, int, Location]]:
+    def __iter__(self) -> Iterator[Tuple[SensorTag, Partition, Location]]:
         if self.locations is not None:
             locations = self.locations
             for partition in self.partitions():
@@ -244,7 +245,7 @@ class NcsLookup:
     @staticmethod
     def _partitions_inf_iterator(
         partitions: Iterable[Partition],
-    ) -> Iterable[Iterable[int]]:
+    ) -> Iterable[Iterable[Partition]]:
         while True:
             yield partitions
 
