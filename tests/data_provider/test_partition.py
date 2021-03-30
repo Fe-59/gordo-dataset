@@ -12,6 +12,11 @@ from gordo_dataset.data_provider.partition import (
 )
 
 
+def test_find_by_name():
+    assert PartitionBy.find_by_name("year") == PartitionBy.YEAR
+    assert PartitionBy.find_by_name("solar") is None
+
+
 def test_year_partition():
     assert YearPartition(2020) < YearPartition(2021)
     assert not YearPartition(2021) < YearPartition(2020)

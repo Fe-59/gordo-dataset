@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Union, Iterable
+from typing import Union, Iterable, Optional
 from datetime import datetime
 
 
@@ -33,6 +33,13 @@ Partition = Union[YearPartition, MonthPartition]
 class PartitionBy(Enum):
     YEAR = "year"
     MONTH = "month"
+
+    @classmethod
+    def find_by_name(cls, name) -> Optional["PartitionBy"]:
+        for enum in cls:
+            if enum.value == name:
+                return enum
+        return None
 
 
 def split_by_partitions(
