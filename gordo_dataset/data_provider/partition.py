@@ -10,7 +10,7 @@ class YearPartition:
 
     def __lt__(self, other):
         if not isinstance(other, YearPartition):
-            raise NotImplemented()
+            raise NotImplementedError()
         return self.year < other.year
 
 
@@ -21,7 +21,7 @@ class MonthPartition:
 
     def __lt__(self, other):
         if not isinstance(other, MonthPartition):
-            raise NotImplemented()
+            raise NotImplementedError()
         if self.year == other.year:
             return self.month < other.month
         return self.year < other.year

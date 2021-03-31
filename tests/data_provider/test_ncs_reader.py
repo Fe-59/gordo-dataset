@@ -10,6 +10,7 @@ from gordo_dataset.data_provider.assets_config import AssetsConfig, PathSpec
 from gordo_dataset.sensor_tag import normalize_sensor_tags
 from gordo_dataset.sensor_tag import SensorTag
 from gordo_dataset.file_system.adl1 import ADLGen1FileSystem
+from gordo_dataset.data_provider.partition import PartitionBy
 
 
 class AzureDLFileSystemMock:
@@ -57,7 +58,10 @@ def assets_config():
 @pytest.fixture
 def ncs_reader(assets_config):
     return NcsReader(
-        ADLGen1FileSystem(AzureDLFileSystemMock(), "adl1"), assets_config=assets_config
+        ADLGen1FileSystem(AzureDLFileSystemMock(), "adl1"),
+        assets_config=assets_config,
+        lookup_for=["yearly_parquet", "csv"],
+        partition_by=PartitionBy.YEAR,
     )
 
 
@@ -117,6 +121,8 @@ def test_load_series_need_base_path(ncs_reader, dates, assets_config):
         ADLGen1FileSystem(AzureDLFileSystemMock(), "adl1"),
         assets_config=assets_config,
         dl_base_path=path_to_weird_base_path_asset,
+        lookup_for=["yearly_parquet", "csv"],
+        partition_by=PartitionBy.YEAR,
     )
     for tag_series in ncs_reader_with_base.load_series(dates[0], dates[1], [tag]):
         assert len(tag_series) == 20
@@ -193,6 +199,8 @@ def test_load_series_with_filter_bad_data(dates, remove_status_codes, assets_con
         ADLGen1FileSystem(AzureDLFileSystemMock(), "adl1"),
         assets_config=assets_config,
         remove_status_codes=remove_status_codes,
+        lookup_for=["yearly_parquet", "csv"],
+        partition_by=PartitionBy.YEAR,
     )
 
     valid_tag_list = normalize_sensor_tags(["TRC-322"])
@@ -209,6 +217,8 @@ def test_parquet_files_lookup(dates, assets_config):
         ADLGen1FileSystem(AzureDLFileSystemMock(), "adl1"),
         assets_config=assets_config,
         remove_status_codes=[0],
+        lookup_for=["yearly_parquet", "csv"],
+        partition_by=PartitionBy.YEAR,
     )
 
     valid_tag_list = normalize_sensor_tags(["TRC-323"])
@@ -226,6 +236,8 @@ def test_with_conflicted_file_types(dates, assets_config):
         ADLGen1FileSystem(AzureDLFileSystemMock(), "adl1"),
         assets_config=assets_config,
         remove_status_codes=[0],
+        lookup_for=["yearly_parquet", "csv"],
+        partition_by=PartitionBy.YEAR,
     )
 
     valid_tag_list = normalize_sensor_tags(["TRC-324"])
@@ -243,6 +255,7 @@ def test_with_conflicted_file_types_with_preferable_csv(dates, assets_config):
         assets_config=assets_config,
         remove_status_codes=[0],
         lookup_for=["csv"],
+        partition_by="year",
     )
 
     valid_tag_list = normalize_sensor_tags(["TRC-324"])

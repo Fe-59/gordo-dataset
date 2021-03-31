@@ -73,7 +73,7 @@ class NcsMonthlyParquetFileType(NcsFileType):
         file_extension = self._file_type.file_extension
         for partition in partitions:
             if not self.check_partition(partition):
-                raise NotImplemented()
+                raise NotImplementedError()
             partition = cast(MonthPartition, partition)
             file_name = (
                 f"{tag_name}_{partition.year}{partition.month:02d}{file_extension}"
@@ -105,7 +105,7 @@ class NcsYearlyParquetFileType(NcsFileType):
         file_extension = self._file_type.file_extension
         for partition in partitions:
             if not self.check_partition(partition):
-                raise NotImplemented()
+                raise NotImplementedError()
             partition = cast(YearPartition, partition)
             path = fs.join("parquet", f"{tag_name}_{partition.year}{file_extension}")
             yield partition, path
@@ -135,7 +135,7 @@ class NcsCsvFileType(NcsFileType):
         file_extension = self._file_type.file_extension
         for partition in partitions:
             if not self.check_partition(partition):
-                raise NotImplemented()
+                raise NotImplementedError()
             path = f"{tag_name}_{partition.year}{file_extension}"
             yield partition, path
 

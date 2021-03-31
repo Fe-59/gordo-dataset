@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 SensorTag = namedtuple("SensorTag", ["name", "asset"])
 
-TagPatternToAsset = namedtuple("TagToAsset", ["tag_regexp", "asset_name"])
+TagPatternToAsset = namedtuple("TagPatternToAsset", ["tag_regexp", "asset_name"])
 
 TAG_TO_ASSET = [
     TagPatternToAsset(re.compile(r"^ninenine.+::.+", re.IGNORECASE), "ninenine"),
