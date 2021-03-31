@@ -3,7 +3,7 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 import timeit
-from typing import Iterable, List, Optional, Tuple, cast
+from typing import Iterable, List, Optional, Tuple, cast, Union
 
 import pandas as pd
 
@@ -17,6 +17,7 @@ from .ncs_contants import NCS_READER_NAME
 from .ncs_file_type import load_ncs_file_types
 from .ncs_lookup import NcsLookup, TagLocations
 from .constants import DEFAULT_MAX_FILE_SIZE
+from .partition import PartitionBy, split_by_partitions, Partition
 
 from ..exceptions import ConfigException
 
@@ -39,6 +40,7 @@ class NcsReader(GordoBaseDataProvider):
         storage_name: Optional[str] = None,
         ncs_lookup: Optional[NcsLookup] = None,
         max_file_size: Optional[int] = DEFAULT_MAX_FILE_SIZE,
+        partition_by: Union[str, PartitionBy] = PartitionBy.MONTH,
         **kwargs,  # Do not remove this
     ):
         """
@@ -60,13 +62,15 @@ class NcsReader(GordoBaseDataProvider):
             Base bath used to override the asset to path dictionary. Useful for demos
             and other non-production settings.
         lookup_for:  Optional[List[str]]
-            List of file finders by the file type name. Value by default: ``['parquet', 'csv']``
+            List of file finders by the file type name. Value by default: ``['parquet', 'yearly_parquet', 'csv']``
         storage_name: Optional[str]
             Used by ``AssetsConfig``
         ncs_lookup: Optional[NcsLookup]
             Creates with current ``storage``, ``storage_name`` and ``lookup_for`` if None
         max_file_size: Optional[int]
             Maximal file size
+        partition_by: Union[str, PartitionBy]
+            Partition by year or month. Default: "month"
 
         Notes
         -----
@@ -92,7 +96,19 @@ class NcsReader(GordoBaseDataProvider):
         elif isinstance(ncs_lookup, NcsLookup):
             raise ConfigException("ncs_lookup should be instance of NcsLookup")
         self.ncs_lookup = ncs_lookup
+        self.partition_by = self.prepare_partition_by(partition_by)
         logger.info(f"Starting NCS reader with {self.threads} threads")
+
+    @staticmethod
+    def prepare_partition_by(partition_by: Union[str, PartitionBy]) -> PartitionBy:
+        result: Optional[PartitionBy]
+        if isinstance(partition_by, str):
+            result = PartitionBy.find_by_name(partition_by)
+            if result is None:
+                raise ConfigException("Wrong partition_by argument '%s'" % partition_by)
+        else:
+            result = partition_by
+        return cast(PartitionBy, result)
 
     def create_ncs_lookup(self, max_file_size: Optional[int]) -> NcsLookup:
         ncs_file_types = load_ncs_file_types(self.lookup_for)
@@ -132,7 +148,9 @@ class NcsReader(GordoBaseDataProvider):
                 f"NCS reader called with train_end_date: {train_end_date} before train_start_date: {train_start_date}"
             )
 
-        years = list(range(train_start_date.year, train_end_date.year + 1))
+        partitions = list(
+            split_by_partitions(self.partition_by, train_start_date, train_end_date)
+        )
 
         tag_dirs_iter = self.ncs_lookup.assets_config_tags_lookup(
             self.assets_config, tag_list, self.dl_base_path
@@ -140,21 +158,23 @@ class NcsReader(GordoBaseDataProvider):
 
         with ThreadPoolExecutor(max_workers=self.threads) as executor:
             fetched_tags = executor.map(
-                lambda tag_dirs: self._load_series_mapper(tag_dirs, years, dry_run),
+                lambda tag_dirs: self._load_series_mapper(
+                    tag_dirs, partitions, dry_run
+                ),
                 tag_dirs_iter,
             )
 
-            for tag_frame_all_years in fetched_tags:
-                filtered = tag_frame_all_years[
-                    (tag_frame_all_years.index >= train_start_date)
-                    & (tag_frame_all_years.index < train_end_date)
+            for tag_frame_all_partitions in fetched_tags:
+                filtered = tag_frame_all_partitions[
+                    (tag_frame_all_partitions.index >= train_start_date)
+                    & (tag_frame_all_partitions.index < train_end_date)
                 ]
                 yield filtered
 
     def _load_series_mapper(
         self,
         tag_dirs: Tuple[SensorTag, Optional[str]],
-        years: List[int],
+        partitions: List[Partition],
         dry_run: Optional[bool] = False,
     ) -> pd.Series:
         tag, tag_dir = tag_dirs
@@ -166,7 +186,7 @@ class NcsReader(GordoBaseDataProvider):
                 self.storage_name,
             )
             return pd.Series()
-        tag_locations = self.ncs_lookup.files_lookup(tag_dir, tag, years)
+        tag_locations = self.ncs_lookup.files_lookup(tag_dir, tag, partitions)
         return self.read_tag_locations(tag_locations, dry_run)
 
     def read_tag_locations(
@@ -186,14 +206,14 @@ class NcsReader(GordoBaseDataProvider):
 
         """
         tag = tag_locations.tag
-        years = tag_locations.years()
+        partitions = tag_locations.partitions()
 
-        all_years = []
-        logger.info(f"Downloading tag: {tag} for years: {years}")
-        for tag, year, location in tag_locations:
+        all_partitions = []
+        logger.info(f"Downloading tag: {tag} for partitions: {partitions}")
+        for tag, partition, location in tag_locations:
             file_path = location.path
             file_type = location.file_type
-            logger.info(f"Parsing file {file_path}")
+            logger.info(f"Parsing file {file_path} from partition {partition}")
 
             try:
                 info = self.storage.info(file_path)
@@ -209,7 +229,7 @@ class NcsReader(GordoBaseDataProvider):
                     df = df.rename(columns={"Value": tag.name})
                     df = df[~df["Status"].isin(self.remove_status_codes)]
                     df.sort_index(inplace=True)
-                    all_years.append(df)
+                    all_partitions.append(df)
                     logger.info(
                         f"Done in {(timeit.default_timer()-before_downloading):.2f} sec {file_path}"
                     )
@@ -218,9 +238,9 @@ class NcsReader(GordoBaseDataProvider):
                 logger.debug(f"{file_path} not found, skipping it: {e}")
 
         try:
-            combined = pd.concat(all_years)
+            combined = pd.concat(all_partitions)
         except Exception as e:
-            logger.debug(f"Not able to concatinate all years: {e}.")
+            logger.debug(f"Not able to concatinate all partitions: {e}.")
             return pd.Series(name=tag.name, data=[])
 
             # There often comes duplicated timestamps, keep the last
@@ -246,26 +266,26 @@ class NcsReader(GordoBaseDataProvider):
     def read_tag_files(
         self,
         tag: SensorTag,
-        years: range,
+        partitions: Iterable[Partition],
         dry_run: Optional[bool] = False,
     ) -> pd.Series:
         """
-        Download tag files for the given years into dataframes,
+        Download tag files for the given partitions into dataframes,
         and return as one dataframe.
 
         Parameters
         ----------
         tag: SensorTag
             the tag to download data for
-        years: range
-            range object providing years to include
+        partitions: Iterable[Partition]
+            range object providing partitions to include
         dry_run: Optional[bool]
             if True, don't download data, just check info, log, and return
 
         Returns
         -------
         pd.Series:
-            Series with all years for one tag.
+            Series with all partitions for one tag.
         """
         tag_base_path = self.dl_base_path
         if not tag_base_path:
@@ -273,7 +293,7 @@ class NcsReader(GordoBaseDataProvider):
 
         if not tag_base_path:
             raise ValueError(f"Unable to find base path from tag {tag} ")
-        logger.info(f"Downloading tag: {tag} for years: {years}")
+        logger.info(f"Downloading tag: {tag} for partitions: {partitions}")
 
         tag_dir = None
         for found_tag, dir_path in self.ncs_lookup.tag_dirs_lookup(
@@ -287,7 +307,9 @@ class NcsReader(GordoBaseDataProvider):
                 f"Unable to find location of {tag} in storage {self.storage_name}"
             )
 
-        tag_locations = self.ncs_lookup.files_lookup(cast(str, tag_dir), tag, years)
+        tag_locations = self.ncs_lookup.files_lookup(
+            cast(str, tag_dir), tag, partitions
+        )
         return self.read_tag_locations(tag_locations, dry_run)
 
     def base_path_from_asset(self, asset: str):
