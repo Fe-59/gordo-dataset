@@ -2,6 +2,7 @@ import os
 
 from unittest.mock import patch, Mock
 import pytest
+import pandas as pd
 
 import dateutil.parser
 
@@ -265,3 +266,21 @@ def test_with_conflicted_file_types_with_preferable_csv(dates, assets_config):
     trc_324_series = tags_series[0]
     # CSV file should be with 1 row
     assert len(trc_324_series) == 1
+
+
+def test_monthly_parquet(dates, assets_config):
+    ncs_reader = NcsReader(
+        ADLGen1FileSystem(AzureDLFileSystemMock(), "adl1"),
+        assets_config=assets_config,
+    )
+
+    valid_tag_list = normalize_sensor_tags(["TRC-325"])
+    series_gen = ncs_reader.load_series(dates[0], dates[1], valid_tag_list)
+    tags_series = [v for v in series_gen]
+    assert len(tags_series) == 1
+    index = tags_series[0].index
+    assert len(index) == 20
+    dr1 = pd.date_range(start="2001-05-10T00:00:00+00:00", periods=10, freq="1T")
+    dr2 = pd.date_range(start="2001-06-10T00:00:00+00:00", periods=10, freq="1T")
+    dr = dr1.append(dr2)
+    assert index.equals(dr)
