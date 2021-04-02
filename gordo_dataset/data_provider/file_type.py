@@ -109,7 +109,8 @@ class ParquetFileType(FileType):
         df[datetime_column] = pd.to_datetime(df[datetime_column], utc=True)
         df = df.set_index(datetime_column)
         for column in time_series_columns.numeric_columns:
-            if df[column].dtypes is np.object:
+            dtypes = df[column].dtypes
+            if not np.issubdtype(dtypes, np.number):
                 df[column] = pd.to_numeric(df[column])
         return df
 
