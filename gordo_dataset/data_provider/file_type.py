@@ -3,7 +3,7 @@ import numpy as np
 
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
-from typing import IO, Optional
+from typing import IO, Optional, List
 
 
 @dataclass
@@ -22,6 +22,13 @@ class TimeSeriesColumns:
         if self.status_column is not None:
             columns.append(self.status_column)
         return columns
+
+    @property
+    def numeric_columns(self) -> List[str]:
+        numeric_columns = [self.value_column]
+        if self.status_column is not None:
+            numeric_columns.append(self.status_column)
+        return numeric_columns
 
 
 class FileType(metaclass=ABCMeta):
@@ -96,11 +103,17 @@ class ParquetFileType(FileType):
         """
         self.time_series_columns = time_series_columns
 
+    def prepare_df(self, df: pd.DataFrame) -> pd.DataFrame:
+        time_series_columns = self.time_series_columns
+        datetime_column = time_series_columns.datetime_column
+        df[datetime_column] = pd.to_datetime(df[datetime_column], utc=True)
+        df = df.set_index(datetime_column)
+        for column in time_series_columns.numeric_columns:
+            if df[column].dtypes is np.object:
+                df[column] = pd.to_numeric(df[column])
+        return df
+
     def read_df(self, f: IO) -> pd.DataFrame:
         columns = self.time_series_columns.columns
-        datetime_column = self.time_series_columns.datetime_column
-        df = pd.read_parquet(f, engine="pyarrow", columns=columns).set_index(
-            datetime_column
-        )
-        df.index = pd.to_datetime(df.index, utc=True)
-        return df
+        df = pd.read_parquet(f, engine="pyarrow", columns=columns)
+        return self.prepare_df(df)
