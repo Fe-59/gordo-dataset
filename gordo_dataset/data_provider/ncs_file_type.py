@@ -146,7 +146,7 @@ ncs_file_types: Dict[str, Type[NcsFileType]] = {
     "csv": NcsCsvFileType,
 }
 
-DEFAULT_TYPE_NAMES = ("parquet", "yearly_parquet", "csv")
+DEFAULT_TYPE_NAMES: List[str] = ["parquet", "yearly_parquet", "csv"]
 
 
 def load_ncs_file_types(
