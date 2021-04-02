@@ -14,7 +14,7 @@ from gordo_dataset.utils import capture_args
 from .base import GordoBaseDataProvider
 from .assets_config import AssetsConfig
 from .ncs_contants import NCS_READER_NAME
-from .ncs_file_type import load_ncs_file_types
+from .ncs_file_type import load_ncs_file_types, DEFAULT_TYPE_NAMES
 from .ncs_lookup import NcsLookup, TagLocations
 from .constants import DEFAULT_MAX_FILE_SIZE
 from .partition import PartitionBy, split_by_partitions, Partition
@@ -25,9 +25,6 @@ logger = logging.getLogger(__name__)
 
 
 class NcsReader(GordoBaseDataProvider):
-
-    DEFAULT_LOOKUP_FOR = ["parquet", "csv"]
-
     @capture_args
     def __init__(
         self,
@@ -86,7 +83,7 @@ class NcsReader(GordoBaseDataProvider):
         self.dl_base_path = dl_base_path
 
         if lookup_for is None:
-            lookup_for = self.DEFAULT_LOOKUP_FOR
+            lookup_for = DEFAULT_TYPE_NAMES
         self.lookup_for = lookup_for
         if storage_name is None:
             storage_name = storage.name
