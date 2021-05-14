@@ -52,7 +52,9 @@ jobs:
 
 
       - name: Check safety
-        run: poetry run safety check --full-report
+        run: |
+          pip list
+          poetry run safety check --full-report
 
       - name: Running tests
         run: poetry run pytest
