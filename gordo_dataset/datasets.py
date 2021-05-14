@@ -10,20 +10,11 @@ from typing import Union
 import pandas as pd
 import numpy as np
 
-from .data_provider.providers import (
-    RandomDataProvider,
-    DataLakeProvider,
-)
+from .data_provider.providers import RandomDataProvider, DataLakeProvider
 from .exceptions import InsufficientDataError
-from .base import (
-    GordoBaseDataset,
-    ConfigurationError,
-)
+from .base import GordoBaseDataset, ConfigurationError
 from .data_provider.base import GordoBaseDataProvider
-from .filter_rows import (
-    pandas_filter_rows,
-    parse_pandas_filter_vars,
-)
+from .filter_rows import pandas_filter_rows, parse_pandas_filter_vars
 from .filter_periods import FilterPeriods
 from .sensor_tag import SensorTag
 from .sensor_tag import normalize_sensor_tags
@@ -74,6 +65,10 @@ class TimeSeriesDataset(GordoBaseDataset):
 
     TAG_NORMALIZERS = {"default": normalize_sensor_tags}
 
+    @staticmethod
+    def create_default_data_provider():
+        return DataLakeProvider()
+
     @compat
     @capture_args
     def __init__(
@@ -82,10 +77,10 @@ class TimeSeriesDataset(GordoBaseDataset):
         train_end_date: Union[datetime, str],
         tag_list: Sequence[Union[str, Dict, SensorTag]],
         target_tag_list: Optional[Sequence[Union[str, Dict, SensorTag]]] = None,
-        data_provider: Union[GordoBaseDataProvider, dict] = DataLakeProvider(),
+        data_provider: Optional[Union[GordoBaseDataProvider, dict]] = None,
         resolution: Optional[str] = "10T",
         row_filter: Union[str, list] = "",
-        known_filter_periods: Optional[list] = [],
+        known_filter_periods: Optional[list] = None,
         aggregation_methods: Union[str, List[str], Callable] = "mean",
         row_filter_buffer_size: int = 0,
         asset: Optional[str] = None,
@@ -95,7 +90,7 @@ class TimeSeriesDataset(GordoBaseDataset):
         high_threshold: Optional[int] = 50000,
         interpolation_method: str = "linear_interpolation",
         interpolation_limit: str = "8H",
-        filter_periods: Optional[dict] = {},
+        filter_periods: Optional[dict] = None,
         tag_normalizer: Union[str, Callable[..., List[SensorTag]]] = "default",
         process_metadata: bool = True,
     ):
@@ -194,6 +189,8 @@ class TimeSeriesDataset(GordoBaseDataset):
             else self.tag_list.copy()
         )
         self.resolution = resolution
+        if data_provider is None:
+            data_provider = self.create_default_data_provider()
         self.data_provider = (
             data_provider
             if not isinstance(data_provider, dict)
@@ -212,7 +209,9 @@ class TimeSeriesDataset(GordoBaseDataset):
             if filter_periods
             else None
         )
-        self.known_filter_periods = known_filter_periods
+        self.known_filter_periods = (
+            known_filter_periods if known_filter_periods is not None else []
+        )
         self.process_metadata = process_metadata
 
         if not self.train_start_date.tzinfo or not self.train_end_date.tzinfo:
