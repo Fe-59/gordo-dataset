@@ -78,6 +78,10 @@ class TimeSeriesDataset(GordoBaseDataset):
         asset: str = None,
         default_asset: str = None,
     ) -> List[SensorTag]:
+        """
+        Converts a list of sensors in different formats, into a list of SensorTag elements.
+        This function might be useful for overwriting in the extended class
+        """
         return normalize_sensor_tags(sensors, asset, default_asset)
 
     @compat
