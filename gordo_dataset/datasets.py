@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from typing import Tuple, List, Dict, Optional, Iterable, Callable, Sequence
+from typing import Tuple, List, Dict, Optional, Iterable, Callable, Sequence, cast
 from datetime import datetime
 from dateutil.parser import isoparse
 from functools import wraps
@@ -10,20 +10,11 @@ from typing import Union
 import pandas as pd
 import numpy as np
 
-from .data_provider.providers import (
-    RandomDataProvider,
-    DataLakeProvider,
-)
+from .data_provider.providers import RandomDataProvider, DataLakeProvider
 from .exceptions import InsufficientDataError
-from .base import (
-    GordoBaseDataset,
-    ConfigurationError,
-)
+from .base import GordoBaseDataset, ConfigurationError
 from .data_provider.base import GordoBaseDataProvider
-from .filter_rows import (
-    pandas_filter_rows,
-    parse_pandas_filter_vars,
-)
+from .filter_rows import pandas_filter_rows, parse_pandas_filter_vars
 from .filter_periods import FilterPeriods
 from .sensor_tag import SensorTag
 from .sensor_tag import normalize_sensor_tags
@@ -63,6 +54,9 @@ def compat(init):
     return wrapper
 
 
+TagList = List[Union[Dict, str, SensorTag]]
+
+
 class TimeSeriesDataset(GordoBaseDataset):
 
     train_start_date = ValidDatetime()
@@ -74,6 +68,22 @@ class TimeSeriesDataset(GordoBaseDataset):
 
     TAG_NORMALIZERS = {"default": normalize_sensor_tags}
 
+    @staticmethod
+    def create_default_data_provider() -> GordoBaseDataProvider:
+        return DataLakeProvider()
+
+    @staticmethod
+    def tag_normalizer(
+        sensors: TagList,
+        asset: str = None,
+        default_asset: str = None,
+    ) -> List[SensorTag]:
+        """
+        Converts a list of sensors in different formats, into a list of SensorTag elements.
+        This function might be useful for overwriting in the extended class
+        """
+        return normalize_sensor_tags(sensors, asset, default_asset)
+
     @compat
     @capture_args
     def __init__(
@@ -82,10 +92,10 @@ class TimeSeriesDataset(GordoBaseDataset):
         train_end_date: Union[datetime, str],
         tag_list: Sequence[Union[str, Dict, SensorTag]],
         target_tag_list: Optional[Sequence[Union[str, Dict, SensorTag]]] = None,
-        data_provider: Union[GordoBaseDataProvider, dict] = DataLakeProvider(),
+        data_provider: Optional[Union[GordoBaseDataProvider, dict]] = None,
         resolution: Optional[str] = "10T",
         row_filter: Union[str, list] = "",
-        known_filter_periods: Optional[list] = [],
+        known_filter_periods: Optional[list] = None,
         aggregation_methods: Union[str, List[str], Callable] = "mean",
         row_filter_buffer_size: int = 0,
         asset: Optional[str] = None,
@@ -95,8 +105,7 @@ class TimeSeriesDataset(GordoBaseDataset):
         high_threshold: Optional[int] = 50000,
         interpolation_method: str = "linear_interpolation",
         interpolation_limit: str = "8H",
-        filter_periods: Optional[dict] = {},
-        tag_normalizer: Union[str, Callable[..., List[SensorTag]]] = "default",
+        filter_periods: Optional[dict] = None,
         process_metadata: bool = True,
     ):
         """
@@ -162,9 +171,6 @@ class TimeSeriesDataset(GordoBaseDataset):
         fiter_periods: dict
             Performs a series of algorithms that drops noisy data is specified.
             See `filter_periods` class for details.
-        tag_normalizer: Union[str, Callable[..., List[SensorTag]]]
-            `default` is only one suitable value for now,
-            uses ``gordo_dataset.sensor_tag.normalize_sensor_tags`` in this case
         process_metadata: bool
             Processing metadata if true
         """
@@ -176,14 +182,6 @@ class TimeSeriesDataset(GordoBaseDataset):
                 f"train_end_date ({self.train_end_date}) must be after train_start_date ({self.train_start_date})"
             )
 
-        if isinstance(tag_normalizer, str):
-            if tag_normalizer not in self.TAG_NORMALIZERS:
-                raise ValueError(
-                    "Unsupported tag_normalizer type '%s'" % tag_normalizer
-                )
-            tag_normalizer = self.TAG_NORMALIZERS[tag_normalizer]
-        self.tag_normalizer = tag_normalizer
-
         self.asset = asset
         self.default_asset = default_asset
 
@@ -194,6 +192,8 @@ class TimeSeriesDataset(GordoBaseDataset):
             else self.tag_list.copy()
         )
         self.resolution = resolution
+        if data_provider is None:
+            data_provider = self.create_default_data_provider()
         self.data_provider = (
             data_provider
             if not isinstance(data_provider, dict)
@@ -212,7 +212,9 @@ class TimeSeriesDataset(GordoBaseDataset):
             if filter_periods
             else None
         )
-        self.known_filter_periods = known_filter_periods
+        self.known_filter_periods = (
+            known_filter_periods if known_filter_periods is not None else []
+        )
         self.process_metadata = process_metadata
 
         if not self.train_start_date.tzinfo or not self.train_end_date.tzinfo:
@@ -247,7 +249,7 @@ class TimeSeriesDataset(GordoBaseDataset):
         if self.row_filter:
             pandas_filter_tags = set(
                 self.tag_normalizer(
-                    parse_pandas_filter_vars(self.row_filter),
+                    cast(TagList, parse_pandas_filter_vars(self.row_filter)),
                     self.asset,
                     self.default_asset,
                 )

@@ -38,11 +38,16 @@ jobs:
           poetry config virtualenvs.in-project false
           poetry config virtualenvs.path ~/.virtualenvs
 
+      - name: Upgrade pip
+        run: |
+          poetry run pip install --upgrade pip
+
       - name: Install Dependencies
         run: poetry install
 
       - name: Check safety
-        run: poetry run safety check --full-report
+        run: |
+          poetry run safety check --full-report
 
       - name: Running tests
         run: poetry run pytest
