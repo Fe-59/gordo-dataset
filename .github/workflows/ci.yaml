@@ -20,11 +20,6 @@ jobs:
           python-version: 3.7
           architecture: 'x64'
 
-      - name: Upgrade pip
-        run: |
-          pip install --upgrade pip
-          pip --version
-
       - name: Install Poetry
         uses: snok/install-poetry@v1.1.1
         with:
@@ -43,17 +38,15 @@ jobs:
           poetry config virtualenvs.in-project false
           poetry config virtualenvs.path ~/.virtualenvs
 
+      - name: Upgrade pip
+        run: |
+          poetry run pip install --upgrade pip
+
       - name: Install Dependencies
         run: poetry install
 
-      - name: pip version
-        run: |
-          pip --version
-
-
       - name: Check safety
         run: |
-          pip list
           poetry run safety check --full-report
 
       - name: Running tests
