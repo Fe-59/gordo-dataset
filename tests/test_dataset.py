@@ -33,14 +33,6 @@ def dataset():
     )
 
 
-@pytest.fixture
-def mock_tag_normalizer():
-    def side_effect(sensors, asset=None, default_asset=None):
-        return [SensorTag(v, asset) if type(v) is str else v for v in sensors]
-
-    return Mock(side_effect=side_effect)
-
-
 def create_timeseries_list():
     """Create three dataframes with different resolution and different start/ends"""
     # Test for no NaNs, test for correct first and last date
@@ -285,18 +277,18 @@ def test_join_timeseries_with_interpolation_method_linear_interpolation_no_limit
     assert len(all_in_frame) == 4177
 
 
-def test_row_filter(mock_tag_normalizer):
+def test_row_filter():
     """Tests that row_filter filters away rows"""
     kwargs = dict(
         data_provider=MockDataProvider(),
         tag_list=[
-            SensorTag("Tag 1", None),
-            SensorTag("Tag 2", None),
-            SensorTag("Tag 3", None),
+            SensorTag("Tag 1", "asset"),
+            SensorTag("Tag 2", "asset"),
+            SensorTag("Tag 3", "asset"),
         ],
         train_start_date=dateutil.parser.isoparse("2017-12-25 06:00:00Z"),
         train_end_date=dateutil.parser.isoparse("2017-12-29 06:00:00Z"),
-        tag_normalizer=mock_tag_normalizer,
+        asset="asset",
     )
     X, _ = TimeSeriesDataset(**kwargs).get_data()
     assert 83 == len(X)
@@ -477,9 +469,7 @@ def test_timeseries_dataset_compat():
 
 
 @pytest.mark.parametrize("n_samples_threshold, filter_value", [(10, 5000), (0, 100)])
-def test_insufficient_data_after_row_filtering(
-    n_samples_threshold, filter_value, mock_tag_normalizer
-):
+def test_insufficient_data_after_row_filtering(n_samples_threshold, filter_value):
     """
     Test that dataframe after row_filter scenarios raise appropriate
     InsufficientDataError
@@ -488,14 +478,14 @@ def test_insufficient_data_after_row_filtering(
     kwargs = dict(
         data_provider=MockDataProvider(),
         tag_list=[
-            SensorTag("Tag 1", None),
-            SensorTag("Tag 2", None),
-            SensorTag("Tag 3", None),
+            SensorTag("Tag 1", "asset"),
+            SensorTag("Tag 2", "asset"),
+            SensorTag("Tag 3", "asset"),
         ],
         train_start_date=dateutil.parser.isoparse("2017-12-25 06:00:00Z"),
         train_end_date=dateutil.parser.isoparse("2017-12-29 06:00:00Z"),
         n_samples_threshold=n_samples_threshold,
-        tag_normalizer=mock_tag_normalizer,
+        asset="asset",
     )
 
     with pytest.raises(InsufficientDataError):
@@ -580,31 +570,31 @@ def test_insufficient_data_after_automatic_filtering():
         TimeSeriesDataset(**kwargs).get_data()
 
 
-def test_trigger_tags(mock_tag_normalizer):
+def test_trigger_tags():
     data_provider = MockDataProvider()
     dataset = TimeSeriesDataset(
         data_provider=data_provider,
         tag_list=[
-            SensorTag("Tag 1", None),
-            SensorTag("Tag 2", None),
+            SensorTag("Tag 1", "asset"),
+            SensorTag("Tag 2", "asset"),
         ],
         target_tag_list=[
-            SensorTag("Tag 5", None),
+            SensorTag("Tag 5", "asset"),
         ],
         train_start_date=dateutil.parser.isoparse("2017-12-25 06:00:00Z"),
         train_end_date=dateutil.parser.isoparse("2017-12-29 06:00:00Z"),
         row_filter="`Tag 3` > 0 & `Tag 4` > 1",
-        tag_normalizer=mock_tag_normalizer,
+        asset="asset",
     )
     X, y = dataset.get_data()
     assert X is not None
     assert y is not None
     assert set(data_provider.last_tag_list) == {
-        SensorTag("Tag 1", None),
-        SensorTag("Tag 2", None),
-        SensorTag("Tag 3", None),
-        SensorTag("Tag 4", None),
-        SensorTag("Tag 5", None),
+        SensorTag("Tag 1", "asset"),
+        SensorTag("Tag 2", "asset"),
+        SensorTag("Tag 3", "asset"),
+        SensorTag("Tag 4", "asset"),
+        SensorTag("Tag 5", "asset"),
     }
     assert set(X.columns.values) == {"Tag 1", "Tag 2"}
     assert set(y.columns.values) == {"Tag 5"}
@@ -622,7 +612,7 @@ def test_get_dataset_with_full_import():
     assert type(dataset) is RandomDataset
 
 
-def test_process_metadata(mock_tag_normalizer):
+def test_process_metadata():
     data_provider = MockDataProvider()
     dataset = TimeSeriesDataset(
         data_provider=data_provider,
@@ -636,8 +626,8 @@ def test_process_metadata(mock_tag_normalizer):
         train_start_date=dateutil.parser.isoparse("2017-12-25 06:00:00Z"),
         train_end_date=dateutil.parser.isoparse("2017-12-29 06:00:00Z"),
         row_filter="`Tag 3` > 0 & `Tag 4` > 1",
-        tag_normalizer=mock_tag_normalizer,
         process_metadata=False,
+        asset="asset",
     )
     dataset.get_data()
     assert dataset._metadata == {}

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from typing import Tuple, List, Dict, Optional, Iterable, Callable, Sequence
+from typing import Tuple, List, Dict, Optional, Iterable, Callable, Sequence, cast
 from datetime import datetime
 from dateutil.parser import isoparse
 from functools import wraps
@@ -54,6 +54,9 @@ def compat(init):
     return wrapper
 
 
+TagList = List[Union[Dict, str, SensorTag]]
+
+
 class TimeSeriesDataset(GordoBaseDataset):
 
     train_start_date = ValidDatetime()
@@ -66,8 +69,16 @@ class TimeSeriesDataset(GordoBaseDataset):
     TAG_NORMALIZERS = {"default": normalize_sensor_tags}
 
     @staticmethod
-    def create_default_data_provider():
+    def create_default_data_provider() -> GordoBaseDataProvider:
         return DataLakeProvider()
+
+    @staticmethod
+    def tag_normalizer(
+        sensors: TagList,
+        asset: str = None,
+        default_asset: str = None,
+    ) -> List[SensorTag]:
+        return normalize_sensor_tags(sensors, asset, default_asset)
 
     @compat
     @capture_args
@@ -91,7 +102,6 @@ class TimeSeriesDataset(GordoBaseDataset):
         interpolation_method: str = "linear_interpolation",
         interpolation_limit: str = "8H",
         filter_periods: Optional[dict] = None,
-        tag_normalizer: Union[str, Callable[..., List[SensorTag]]] = "default",
         process_metadata: bool = True,
     ):
         """
@@ -157,9 +167,6 @@ class TimeSeriesDataset(GordoBaseDataset):
         fiter_periods: dict
             Performs a series of algorithms that drops noisy data is specified.
             See `filter_periods` class for details.
-        tag_normalizer: Union[str, Callable[..., List[SensorTag]]]
-            `default` is only one suitable value for now,
-            uses ``gordo_dataset.sensor_tag.normalize_sensor_tags`` in this case
         process_metadata: bool
             Processing metadata if true
         """
@@ -170,14 +177,6 @@ class TimeSeriesDataset(GordoBaseDataset):
             raise ValueError(
                 f"train_end_date ({self.train_end_date}) must be after train_start_date ({self.train_start_date})"
             )
-
-        if isinstance(tag_normalizer, str):
-            if tag_normalizer not in self.TAG_NORMALIZERS:
-                raise ValueError(
-                    "Unsupported tag_normalizer type '%s'" % tag_normalizer
-                )
-            tag_normalizer = self.TAG_NORMALIZERS[tag_normalizer]
-        self.tag_normalizer = tag_normalizer
 
         self.asset = asset
         self.default_asset = default_asset
@@ -246,7 +245,7 @@ class TimeSeriesDataset(GordoBaseDataset):
         if self.row_filter:
             pandas_filter_tags = set(
                 self.tag_normalizer(
-                    parse_pandas_filter_vars(self.row_filter),
+                    cast(TagList, parse_pandas_filter_vars(self.row_filter)),
                     self.asset,
                     self.default_asset,
                 )
