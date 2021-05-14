@@ -23,6 +23,7 @@ jobs:
       - name: Upgrade pip
         run: |
           pip install --upgrade pip
+          pip --version
 
       - name: Install Poetry
         uses: snok/install-poetry@v1.1.1
