@@ -735,7 +735,7 @@ python-versions = "*"
 name = "pywin32"
 version = "227"
 description = "Python for Window Extensions"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -929,7 +929,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "0947e54d2464d3fcb3605b4e2597f2cbe48f3f84b2a297641a6500f759072e9f"
+content-hash = "c66f2bc64da5d68ed600fdf6f8c912d8db8ca62a90bdd09660f167235d00abb3"
 
 [metadata.files]
 adal = [
